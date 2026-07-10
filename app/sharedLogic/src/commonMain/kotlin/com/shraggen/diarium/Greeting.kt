@@ -9,4 +9,8 @@ class Greeting {
     fun greet(): String {
         return sayHello(platform.name)
     }
+
+    private fun sayHello(name: String): String {
+        return "hello"
+    }
 }
