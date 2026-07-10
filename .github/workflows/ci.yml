@@ -1,0 +1,37 @@
+name: Diarium Governance & CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  governance-and-build:
+    name: Run Fitness Functions and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v7
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'jetbrains'
+
+      - name: Setup Gradle Cache
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Run Detekt (Complexity & Code Smells)
+        run: ./gradlew detekt --no-daemon
+
+      - name: Run Architecture Fitness Tests (Konsist)
+        run: ./gradlew :core:jvmTest --no-daemon
+
+      - name: Build KMP Shared Logic
+        run: ./gradlew :app:sharedLogic:assemble --no-daemon
+
+      # Optional: In the future, we will add steps here to build the Android APK
+      # and iOS frameworks for the true "Walking Skeleton" deployment.
