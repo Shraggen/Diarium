@@ -1,0 +1,6 @@
+site_name: Arc42 Docs
+theme:
+  name: material
+
+nav:
+  - Home: docs/architecture.md

@@ -1,16 +1,32 @@
 name: Publish Docs
+
 on:
   push:
+    branches:
+      - main
     paths:
       - 'docs/**'
+      - 'mkdocs.yml'
+
+permissions:
+  contents: write
+
 jobs:
   deploy-docs:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - name: Setup mdBook or MkDocs
-        run: pip install mkdocs-material # Or use a pre-built MkDocs docker action
-      - name: Build & Deploy
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install MkDocs and Material Theme
         run: |
-          mkdocs build
-          # Action to deploy to gh-pages branch...
+          pip install mkdocs-material
+
+      - name: Deploy to GitHub Pages
+        run: |
+          mkdocs gh-deploy --force
