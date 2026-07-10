@@ -33,9 +33,24 @@ contributors. See <https://arc42.org>.
 
 ## Business Context
 
-**\<Diagram or Table\>**
+```mermaid
+flowchart LR
+    User((Field Worker\nBeekeeper/Mechanic))
+    
+    subgraph Diarium [Diarium Offline Platform]
+        App[Mobile/Desktop App]
+    end
+    
+    LLM[(Local LLM\nGGUF)]
+    DB[(Local SQLite\nRoom)]
 
-**\<optionally: Explanation of external domain interfaces\>**
+    User <-->|Voice Commands\nAudio Feedback| App
+    App <-->|Prompts & JSON| LLM
+    App <-->|Structured Queries| DB
+```
+
+**Explanation:**  
+Diarium operates entirely offline. The user interacts via voice. The app uses a local LLM to translate natural language into structured JSON tool-calls, which mutate local state in the database.
 
 ## Technical Context
 
@@ -48,6 +63,41 @@ contributors. See <https://arc42.org>.
 # Solution Strategy
 
 # Building Block View
+
+## Whitebox Overall System
+
+This diagram illustrates the Microkernel (Plugin) Architecture of Diarium. 
+The Core module remains completely isolated from domain-specific business rules.
+
+```mermaid
+graph TD
+    subgraph UI [App Layer]
+        Compose[Shared Compose UI]
+    end
+
+    subgraph Core [Diarium Core - Instability: 0.0]
+        Kernel[DiariumKernel]
+        ToolContract[[DiariumTool Interface]]
+        Kernel -->|Routes to| ToolContract
+    end
+
+    subgraph Domain [Domain Plugins - Instability: 1.0]
+        Beekeeper[RecordInspectionTool]
+        Beekeeper -.->|Implements| ToolContract
+    end
+
+    %% Dependencies
+    Compose -->|Instantiates| Kernel
+    Compose -->|Injects| Beekeeper
+```
+
+**Motivation:**  
+We chose a Microkernel Architecture over a Pipeline or Service-Based architecture to support maximum extensibility. The `Core` acts as an offline Voice OS, while specific professions (Beekeepers, Mechanics) are injected as Plugins.
+
+**Contained Building Blocks:**  
+* **Diarium Core:** Contains the LLM Orchestration, STT/TTS bridges (planned), and Tool Routing. Knows nothing about bees or cars.
+* **Domain Plugins (`sharedLogic`):** Contains the JSON Schema definitions and database execution logic for specific tasks.
+* **App Layer (`sharedUI`):** Wires the Plugins into the Core upon startup via Dependency Injection.
 
 ## Whitebox Overall System
 
