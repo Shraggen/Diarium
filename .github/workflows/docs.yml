@@ -1,0 +1,16 @@
+name: Publish Docs
+on:
+  push:
+    paths:
+      - 'docs/**'
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Setup mdBook or MkDocs
+        run: pip install mkdocs-material # Or use a pre-built MkDocs docker action
+      - name: Build & Deploy
+        run: |
+          mkdocs build
+          # Action to deploy to gh-pages branch...
