@@ -1,0 +1,79 @@
+name: "CodeQL Advanced"
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  schedule:
+    - cron: '44 19 * * 2'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    timeout-minutes: 60
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - language: actions
+          build-mode: none
+        - language: java-kotlin
+          build-mode: manual
+        - language: javascript-typescript
+          build-mode: none
+        - language: swift
+          build-mode: autobuild
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 1. Prepare environment for Kotlin/Java compilation
+    - name: Set up JDK 21
+      if: matrix.language == 'java-kotlin'
+      uses: actions/setup-java@v5
+      with:
+        java-version: '21'
+        distribution: 'jetbrains'
+
+    - name: Setup Gradle Cache
+      if: matrix.language == 'java-kotlin'
+      uses: gradle/actions/setup-gradle@v6
+
+    # 2. Initialize CodeQL
+    - name: Initialize CodeQL
+      uses: github/codeql-action/init@v4
+      with:
+        languages: ${{ matrix.language }}
+        build-mode: ${{ matrix.build-mode }}
+
+    # 3. Compile Step (Manual execution avoids overhead and native compilation issues)
+    - name: Run manual build steps
+      if: matrix.build-mode == 'manual'
+      shell: bash
+      run: |
+        if [ "${{ matrix.language }}" = "java-kotlin" ]; then
+          chmod +x gradlew
+          # Compile the Kotlin source code to JVM/Android classes for indexing
+          # Skips running tests, architecture tests (Konsist), detekt checks, and iOS targets which would fail on Linux
+          ./gradlew compileKotlin -x test --no-daemon
+        elif [ "${{ matrix.language }}" = "swift" ]; then
+          # Placeholder template if Swift is ever switched to a manual build
+          echo "Xcodebuild commands go here if Swift autobuild is disabled"
+        else
+          echo "No manual build needed for ${{ matrix.language }}"
+        fi
+
+    # 4. Perform CodeQL Analysis
+    - name: Perform CodeQL Analysis
+      uses: github/codeql-action/analyze@v4
+      with:
+        category: "/language:${{matrix.language}}"
