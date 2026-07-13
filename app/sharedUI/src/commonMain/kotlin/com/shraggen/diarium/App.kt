@@ -1,51 +1,141 @@
 package com.shraggen.diarium
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+data class DiariumUiState(
+    val modelStatus: ModelStatus = ModelStatus.NotLoaded,
+    val userInput: String = "",
+    val output: String = "",
+    val isProcessing: Boolean = false,
+)
+
+sealed interface ModelStatus {
+    data object NotLoaded : ModelStatus
+
+    data class Loading(
+        val message: String,
+    ) : ModelStatus
+
+    data class Ready(
+        val modelName: String,
+    ) : ModelStatus
+
+    data class Error(
+        val message: String,
+    ) : ModelStatus
+}
+
 @Composable
-fun App() {
+fun App(
+    state: DiariumUiState = DiariumUiState(),
+    onUserInputChanged: (String) -> Unit = {},
+    onSelectModel: () -> Unit = {},
+    onProcess: () -> Unit = {},
+) {
+    val modelReady = state.modelStatus is ModelStatus.Ready
+    val modelLoading = state.modelStatus is ModelStatus.Loading
+
     MaterialTheme {
-        // 1. Initialize our Skeleton
-
-        var outputLog by remember { mutableStateOf("Kernel Booted. Waiting for command...") }
-
         Column(
             modifier = Modifier
                 .background(MaterialTheme.colorScheme.background)
                 .safeContentPadding()
                 .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+                .verticalScroll(rememberScrollState())
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "Diarium Walking Skeleton",
-                style = MaterialTheme.typography.headlineSmall
+                text = "Diarium local tool call",
+                style = MaterialTheme.typography.headlineSmall,
             )
 
+            Text(
+                text = modelStatusText(state.modelStatus),
+                color = when (state.modelStatus) {
+                    is ModelStatus.Error -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onBackground
+                },
+            )
 
-            // Simulate the LLM deciding to call a tool based on "I saw the queen in hive 4"
-
-
-            // Simulate an invalid LLM hallucination
-
-            // Output Console
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                    .padding(16.dp)
+            Button(
+                onClick = onSelectModel,
+                enabled = !modelLoading && !state.isProcessing,
             ) {
-                Text(text = outputLog, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(if (modelReady) "Change GGUF model" else "Select GGUF model")
+            }
+
+            OutlinedTextField(
+                value = state.userInput,
+                onValueChange = onUserInputChanged,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = modelReady && !state.isProcessing,
+                label = { Text("Command") },
+                placeholder = {
+                    Text("I inspected hive 4 and saw the queen.")
+                },
+                minLines = 3,
+            )
+
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Button(
+                    onClick = onProcess,
+                    enabled = modelReady &&
+                        state.userInput.isNotBlank() &&
+                        !state.isProcessing,
+                ) {
+                    Text("Process locally")
+                }
+
+                if (modelLoading || state.isProcessing) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            if (state.output.isNotBlank()) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = "Result",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(state.output)
+                    }
+                }
             }
         }
     }
 }
+
+private fun modelStatusText(status: ModelStatus): String =
+    when (status) {
+        ModelStatus.NotLoaded -> "Select an instruction-tuned GGUF model to begin."
+        is ModelStatus.Loading -> status.message
+        is ModelStatus.Ready -> "Ready: ${status.modelName}"
+        is ModelStatus.Error -> status.message
+    }

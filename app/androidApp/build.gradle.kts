@@ -21,6 +21,7 @@ dependencies {
     implementation(projects.app.sharedUI)
 
     implementation(libs.androidx.activity.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)

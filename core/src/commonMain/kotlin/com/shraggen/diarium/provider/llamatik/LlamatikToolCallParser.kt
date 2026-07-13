@@ -14,8 +14,14 @@ class LlamatikToolCallParser(
         response: String,
         callId: String = DEFAULT_CALL_ID,
     ): ToolCall {
+        val normalizedResponse = response
+            .trim()
+            .removeSurrounding("```json", "```")
+            .removeSurrounding("```", "```")
+            .trim()
+
         val root = try {
-            json.parseToJsonElement(response).jsonObject
+            json.parseToJsonElement(normalizedResponse).jsonObject
         } catch (exception: SerializationException) {
             throw IllegalArgumentException(
                 "Llamatik returned invalid JSON.",

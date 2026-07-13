@@ -1,5 +1,4 @@
 import com.lemonappdev.konsist.api.Konsist
-import com.lemonappdev.konsist.api.ext.list.withPackage
 import com.lemonappdev.konsist.api.verify.assertFalse
 import com.lemonappdev.konsist.api.verify.assertTrue
 import kotlin.test.Test
@@ -10,13 +9,22 @@ class ArchitectureFitnessTest {
     fun `core module must not depend on app or domain modules`() {
         // Fitness Function: Prevent Instability in Core
         // Core must remain completely agnostic of the UI and Logic.
-        Konsist
-            .scopeFromProject()
+        val coreFiles = Konsist
+            .scopeFromProduction(moduleName = "core")
             .files
-            .withPackage("com.shraggen.diarium.core..")
-            .assertFalse(additionalMessage = "Core module violated architecture by importing domain logic!") {
-                it.hasAllImports { import -> import.name.startsWith("com.shraggen.diarium.app") }
+
+        kotlin.test.assertTrue(
+            coreFiles.isNotEmpty(),
+            "The core architecture scope must not be empty.",
+        )
+
+        coreFiles.assertFalse(
+            additionalMessage = "Core module violated architecture by importing domain logic!",
+        ) {
+            it.hasImport { import ->
+                import.name.startsWith("com.shraggen.diarium.app")
             }
+        }
     }
 
     @Test
@@ -24,9 +32,8 @@ class ArchitectureFitnessTest {
         // Fitness Function: Abstractness in Core
         // Ensures we are defining contracts (Tools, Engines) rather than concrete implementations here.
         Konsist
-            .scopeFromProject()
+            .scopeFromProduction(moduleName = "core")
             .interfaces()
-            .withPackage("com.shraggen.diarium.core..")
             .assertTrue { it.hasPublicOrDefaultModifier }
     }
 }

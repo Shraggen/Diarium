@@ -139,3 +139,97 @@ Run:
 ./gradlew :app:sharedLogic:assemble
 ./gradlew :app:androidApp:assembleDebug
 ./gradlew detekt
+
+---
+
+## 2026-07-13 — Android local-inference vertical slice
+
+### Completed
+
+- Repaired the core architecture fitness tests so they inspect the real
+  `core` production module and fail if that scope is empty.
+- Added `DiariumController` in `sharedLogic` to own Llamatik initialization,
+  `DiariumKernel`, registered tools, processing, and shutdown.
+- Applied the loaded GGUF model's embedded chat template before constrained
+  JSON generation.
+- Added an Android model importer using the system document picker.
+- Models are copied into private app storage and the newest imported GGUF is
+  restored on later app launches.
+- Added an Android `ViewModel` that performs model copying, initialization,
+  and inference away from the UI thread.
+- Added Compose states for model selection, loading, ready, processing,
+  success, and failure.
+- Documented the Qwen2.5-0.5B-Instruct Q4_K_M development baseline in
+  `docs/development-model.md`.
+
+### Verification completed
+
+- `./gradlew :core:jvmTest`
+- `./gradlew :app:sharedLogic:assemble`
+- `./gradlew :app:androidApp:assembleDebug`
+- `./gradlew detekt`
+
+### Next action
+
+Install the debug build on a physical Android device, import the documented
+GGUF model, and run:
+
+`I inspected hive 4 and saw the queen.`
+
+The milestone is complete only after Llamatik produces the constrained call
+and `RecordInspectionTool` returns the visible result on-device.
+
+### Still deferred
+
+- no microphone or Whisper integration
+- no hotword detection
+- no Room persistence
+- no TTS
+- no multi-turn interaction
+- no production model downloader
+
+---
+
+## 2026-07-13 — Llamatik grammar crash workaround
+
+### Device finding
+
+The first physical-device call aborted in native code with:
+
+`Unexpected empty grammar stack after accepting piece: {`
+
+The stack trace reached `llama_sampler_accept` from Llamatik's
+`llama_generate_json_schema` loop. Llamatik 1.8.1 calls
+`llama_sampler_accept` after `llama_sampler_sample`, although the latter
+already accepts the selected token in the bundled llama.cpp version. Grammar
+state is advanced twice and the uncaught C++ exception terminates Android
+before Kotlin can recover.
+
+### Workaround
+
+- Temporarily stopped calling Llamatik's `generateJson` native path.
+- Added the complete tool-call JSON Schema and strict output instructions to
+  the model prompt, then used ordinary generation.
+- Continued parsing the resulting envelope in Kotlin.
+- Added support for a JSON response wrapped in a Markdown fence.
+- Added regression tests for prompt construction and fenced response parsing.
+
+This restores process safety, but it is prompt-guided structured generation,
+not token-level constrained generation. Restore `generateJson` only after the
+native double-accept has been removed in a verified Llamatik release.
+
+### Physical-device verification
+
+Rebuilt and installed the debug APK over the existing installation on an
+SM-A546B, preserving its app data. The app restored
+`qwen2.5-0.5b-instruct-q4_0.gguf` and processed:
+
+`I inspected hive 4 and saw the queen.`
+
+The local execution completed with:
+
+`{"hive_id":"4","queen_seen":true,"recorded":true}`
+
+Logcat contained no `libc++abi`, `runtime_error`, `Fatal signal`, or native
+grammar abort during that run. Q4_K_M remains the documented development
+baseline; Q4_0 is the quantization verified in this device test.

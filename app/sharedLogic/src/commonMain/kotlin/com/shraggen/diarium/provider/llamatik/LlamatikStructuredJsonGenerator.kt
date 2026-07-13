@@ -5,7 +5,7 @@ import kotlinx.serialization.json.JsonObject
 
 expect class LlamatikStructuredJsonGenerator() : StructuredJsonGenerator {
 
-    fun initialize(modelFileName: String): Boolean
+    fun initialize(modelLocation: String): Boolean
 
     override suspend fun generate(
         prompt: String,
