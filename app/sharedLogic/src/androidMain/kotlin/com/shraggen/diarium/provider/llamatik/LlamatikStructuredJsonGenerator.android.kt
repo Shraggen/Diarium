@@ -16,19 +16,35 @@ actual class LlamatikStructuredJsonGenerator actual constructor() :
         prompt: String,
         schema: JsonObject,
     ): String {
+        if (USE_NATIVE_GRAMMAR) {
+            val formattedPrompt = LlamaBridge.applyChatTemplate(
+                messages = listOf("user" to prompt),
+                addAssistantPrefix = true,
+            ) ?: prompt
+
+            // Re-enabled after upgrading to Llamatik 1.9. Not independently
+            // confirmed fixed upstream — verify on a physical device before
+            // trusting this. Flip USE_NATIVE_GRAMMAR back to false if the
+            // "Unexpected empty grammar stack" abort reappears.
+            return LlamaBridge.generateJson(
+                prompt = formattedPrompt,
+                jsonSchema = schema.toString(),
+            )
+        }
+
         val structuredPrompt = structuredJsonPrompt(prompt, schema)
         val formattedPrompt = LlamaBridge.applyChatTemplate(
             messages = listOf("user" to structuredPrompt),
             addAssistantPrefix = true,
         ) ?: structuredPrompt
-
-        // Llamatik 1.8.1 double-accepts generated tokens in its grammar sampler,
-        // which aborts the process on the first JSON token. Keep schema guidance
-        // in the prompt until the native dependency removes that second accept.
         return LlamaBridge.generate(formattedPrompt)
     }
 
     actual fun shutdown() {
         LlamaBridge.shutdown()
+    }
+
+    private companion object {
+        const val USE_NATIVE_GRAMMAR = false // reproduced identically on 1.9 — see tombstone 2026-07-13 23:02
     }
 }
