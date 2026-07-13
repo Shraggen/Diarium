@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.tooling.preview.Preview
+import com.shraggen.diarium.beekeeping.InspectionRecord
 
 class MainActivity : ComponentActivity() {
 
@@ -35,6 +36,8 @@ class MainActivity : ComponentActivity() {
                     modelPicker.launch(arrayOf("*/*"))
                 },
                 onProcess = viewModel::processInput,
+                onConfirmToolCall = viewModel::confirmToolCall,
+                onCancelToolCall = viewModel::cancelToolCall,
             )
         }
     }
@@ -51,6 +54,14 @@ fun AppAndroidPreview() {
             ),
             userInput = "I inspected hive 4 and saw the queen.",
             output = "{\"hive_id\":\"4\",\"queen_seen\":true,\"recorded\":true}",
+            recentInspections = listOf(
+                InspectionRecord(
+                    id = 1,
+                    hiveId = "4",
+                    queenSeen = true,
+                    recordedAtEpochMillis = 0,
+                ),
+            ),
         ),
     )
 }

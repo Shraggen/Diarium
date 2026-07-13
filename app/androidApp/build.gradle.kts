@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.detekt)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.androidx.room)
 }
 
 detekt {
@@ -22,9 +24,15 @@ dependencies {
 
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.serialization.json)
+    implementation(libs.androidx.room.runtime)
+    ksp(libs.androidx.room.compiler)
 
     implementation(libs.compose.uiToolingPreview)
     debugImplementation(libs.compose.uiTooling)
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 android {

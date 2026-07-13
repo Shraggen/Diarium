@@ -4,6 +4,7 @@ import com.shraggen.diarium.provider.StructuredJsonGenerator
 import com.shraggen.diarium.provider.llamatik.LlamatikToolCallParser
 import com.shraggen.diarium.provider.llamatik.LlamatikToolMapper
 import com.shraggen.diarium.tool.Tool
+import com.shraggen.diarium.tool.ToolCall
 import com.shraggen.diarium.tool.ToolExecutor
 import com.shraggen.diarium.tool.ToolRegistry
 import com.shraggen.diarium.tool.ToolResult
@@ -37,6 +38,14 @@ class DiariumKernel(
             )
         }
 
+        return execute(plan(userInput))
+    }
+
+    suspend fun plan(userInput: String): ToolCall {
+        require(userInput.isNotBlank()) {
+            "User input must not be blank."
+        }
+
         val response = generator.generate(
             prompt = LlamatikToolMapper.promptFor(
                 userInput = userInput,
@@ -45,8 +54,8 @@ class DiariumKernel(
             schema = LlamatikToolMapper.schemaFor(tools),
         )
 
-        val call = parser.parse(response)
-
-        return executor.execute(call)
+        return parser.parse(response)
     }
+
+    suspend fun execute(call: ToolCall): ToolResult = executor.execute(call)
 }

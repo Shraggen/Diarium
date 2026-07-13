@@ -4,7 +4,9 @@ import com.llamatik.library.platform.LlamaBridge
 import com.shraggen.diarium.provider.StructuredJsonGenerator
 import kotlinx.serialization.json.JsonObject
 
-actual class LlamatikStructuredJsonGenerator actual constructor() :
+actual class LlamatikStructuredJsonGenerator actual constructor(
+    private val mode: StructuredGenerationMode,
+) :
     StructuredJsonGenerator {
 
     actual fun initialize(modelLocation: String): Boolean {
@@ -16,22 +18,15 @@ actual class LlamatikStructuredJsonGenerator actual constructor() :
         prompt: String,
         schema: JsonObject,
     ): String {
-        if (USE_NATIVE_GRAMMAR) {
-            val formattedPrompt = LlamaBridge.applyChatTemplate(
-                messages = listOf("user" to prompt),
-                addAssistantPrefix = true,
-            ) ?: prompt
-
-            // Re-enabled after upgrading to Llamatik 1.9. Not independently
-            // confirmed fixed upstream — verify on a physical device before
-            // trusting this. Flip USE_NATIVE_GRAMMAR back to false if the
-            // "Unexpected empty grammar stack" abort reappears.
-            return LlamaBridge.generateJson(
-                prompt = formattedPrompt,
-                jsonSchema = schema.toString(),
-            )
+        return when (mode) {
+            StructuredGenerationMode.PROMPT_GUIDED ->
+                generateWithPrompt(prompt, schema)
+            StructuredGenerationMode.NATIVE_GRAMMAR ->
+                generateWithNativeGrammar(prompt, schema)
         }
+    }
 
+    private fun generateWithPrompt(prompt: String, schema: JsonObject): String {
         val structuredPrompt = structuredJsonPrompt(prompt, schema)
         val formattedPrompt = LlamaBridge.applyChatTemplate(
             messages = listOf("user" to structuredPrompt),
@@ -40,11 +35,21 @@ actual class LlamatikStructuredJsonGenerator actual constructor() :
         return LlamaBridge.generate(formattedPrompt)
     }
 
-    actual fun shutdown() {
-        LlamaBridge.shutdown()
+    private fun generateWithNativeGrammar(
+        prompt: String,
+        schema: JsonObject,
+    ): String {
+        val formattedPrompt = LlamaBridge.applyChatTemplate(
+            messages = listOf("user" to prompt),
+            addAssistantPrefix = true,
+        ) ?: prompt
+        return LlamaBridge.generateJson(
+            prompt = formattedPrompt,
+            jsonSchema = schema.toString(),
+        )
     }
 
-    private companion object {
-        const val USE_NATIVE_GRAMMAR = false // reproduced identically on 1.9 — see tombstone 2026-07-13 23:02
+    actual fun shutdown() {
+        LlamaBridge.shutdown()
     }
 }

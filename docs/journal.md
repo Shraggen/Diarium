@@ -205,6 +205,8 @@ already accepts the selected token in the bundled llama.cpp version. Grammar
 state is advanced twice and the uncaught C++ exception terminates Android
 before Kotlin can recover.
 
+The same abort was reproduced after upgrading to Llamatik 1.9.0.
+
 ### Workaround
 
 - Temporarily stopped calling Llamatik's `generateJson` native path.
@@ -233,3 +235,61 @@ The local execution completed with:
 Logcat contained no `libc++abi`, `runtime_error`, `Fatal signal`, or native
 grammar abort during that run. Q4_K_M remains the documented development
 baseline; Q4_0 is the quantization verified in this device test.
+
+---
+
+## 2026-07-13 — Persistent inspection journal
+
+### Completed
+
+- Added a persistence-neutral `InspectionRepository` contract and inspection
+  records in the beekeeping shared-logic package.
+- Changed `RecordInspectionTool` to validate and persist inspections instead
+  of returning an in-memory acknowledgement.
+- Added repository-backed recent-inspection reads for the journal UI.
+- Added an Android Room database, DAO, repository adapter, and exported
+  version 1 schema.
+- Added a journal section that loads independently of model initialization
+  and refreshes after local tool execution.
+- Split tool planning from execution and added an explicit confirmation card;
+  no model-proposed journal write executes before user confirmation.
+- Split Android runtime work out of the ViewModel to preserve the enforced
+  class-size boundary.
+- Replaced the boolean grammar flag with explicit `PROMPT_GUIDED` and
+  `NATIVE_GRAMMAR` modes. The safe prompt-guided mode remains the default.
+- Added shared tests covering persistence calls and blank hive rejection.
+
+### Verification completed
+
+- `./gradlew :app:sharedLogic:allTests`
+- `./gradlew :core:jvmTest`
+- `./gradlew :app:androidApp:assembleDebug`
+- `./gradlew detekt`
+- Installed the debug APK on an SM-A546B and processed:
+  `I inspected hive 7 and saw the queen.`
+- Room created record 1 and the journal immediately displayed Hive 7 with
+  `Queen seen`.
+- Force-stopped and relaunched the app; record 1 was restored from the Room
+  database while the GGUF model also reinitialized.
+- The Android crash log was empty and no Llamatik grammar abort occurred.
+
+### Multi-tool safety finding
+
+An on-device probe asked the 0.5B model to show the most recent inspection.
+In prompt-guided mode it incorrectly selected the mutating record tool and
+invented a placeholder hive identifier. The experimental
+`list_recent_inspections` LLM tool was therefore removed from the registered
+tool set. Recent records remain available directly through the repository and
+journal UI. Multi-tool routing must remain deferred until it has a mutation
+confirmation boundary or a reliably constrained selector.
+
+The confirmation boundary was then verified on-device in both directions:
+the misrouted read request displayed its invented arguments and **Cancel**
+left the database unchanged, while a valid hive 8 proposal wrote record 3
+only after **Confirm** was selected.
+
+### Next milestone
+
+Integrate microphone capture and Llamatik Whisper as an input adapter for the
+existing text-to-kernel-to-persistent-journal path. Keep hotword detection,
+TTS, multi-turn interaction, and production model downloading deferred.

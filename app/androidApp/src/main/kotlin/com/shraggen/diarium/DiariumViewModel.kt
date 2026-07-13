@@ -4,35 +4,35 @@ import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.shraggen.diarium.tool.ToolResult
 import java.io.File
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class DiariumViewModel(
     application: Application,
 ) : AndroidViewModel(application) {
 
-    private val controller = DiariumController()
-    private val modelStore = AndroidModelStore(application)
+    private val runtime = AndroidDiariumRuntime(application)
 
     private val mutableUiState = MutableStateFlow(DiariumUiState())
     val uiState: StateFlow<DiariumUiState> = mutableUiState.asStateFlow()
+    private val toolCallCoordinator = ToolCallCoordinator(
+        runtime = runtime,
+        mutableUiState = mutableUiState,
+        coroutineScope = viewModelScope,
+    )
 
     init {
+        refreshRecentInspections()
         restoreExistingModel()
     }
 
     fun updateUserInput(value: String) {
-        mutableUiState.update { state ->
-            state.copy(userInput = value)
-        }
+        toolCallCoordinator.updateUserInput(value)
     }
 
     fun loadModel(uri: Uri) {
@@ -51,74 +51,57 @@ class DiariumViewModel(
             }
 
             runCatching {
-                withContext(Dispatchers.IO) {
-                    controller.shutdown()
-                }
-
-                val modelFile = withContext(Dispatchers.IO) {
-                    modelStore.importModel(uri)
-                }
-
+                val modelFile = runtime.importModel(uri)
                 initializeModelFile(modelFile)
             }.exceptionOrNull()?.let(::reportModelError)
         }
     }
 
     fun processInput() {
-        val state = mutableUiState.value
-        if (state.isProcessing ||
-            state.modelStatus !is ModelStatus.Ready ||
-            state.userInput.isBlank()
-        ) {
-            return
-        }
+        toolCallCoordinator.plan()
+    }
 
-        viewModelScope.launch {
-            mutableUiState.update { current ->
-                current.copy(
-                    isProcessing = true,
-                    output = "",
-                )
-            }
+    fun confirmToolCall() {
+        toolCallCoordinator.confirm()
+    }
 
-            val outcome = runCatching {
-                val result = withContext(Dispatchers.IO) {
-                    controller.process(mutableUiState.value.userInput)
-                }
-
-                result.displayText()
-            }
-
-            mutableUiState.update { current ->
-                current.copy(
-                    isProcessing = false,
-                    output = outcome.fold(
-                        onSuccess = { it },
-                        onFailure = { exception ->
-                            exception.failureMessage(
-                                prefix = "Inference failed: ",
-                                fallback = "Unknown error.",
-                            )
-                        },
-                    ),
-                )
-            }
-        }
+    fun cancelToolCall() {
+        toolCallCoordinator.cancel()
     }
 
     override fun onCleared() {
-        controller.shutdown()
+        runtime.shutdown()
         super.onCleared()
     }
 
     private fun restoreExistingModel() {
-        val modelFile = modelStore.newestModel()
+        val modelFile = runtime.newestModel()
             ?: return
 
         viewModelScope.launch {
             runCatching {
                 initializeModelFile(modelFile)
             }.exceptionOrNull()?.let(::reportModelError)
+        }
+    }
+
+    private fun refreshRecentInspections() {
+        viewModelScope.launch {
+            val outcome = runCatching {
+                runtime.recentInspections()
+            }
+
+            mutableUiState.update { state ->
+                state.copy(
+                    recentInspections = outcome.getOrDefault(
+                        state.recentInspections,
+                    ),
+                    journalError = outcome.exceptionOrNull()?.failureMessage(
+                        prefix = "Could not load journal: ",
+                        fallback = "Unknown database error.",
+                    ),
+                )
+            }
         }
     }
 
@@ -131,13 +114,7 @@ class DiariumViewModel(
             )
         }
 
-        val initialized = withContext(Dispatchers.IO) {
-            controller.initialize(modelFile.absolutePath)
-        }
-
-        check(initialized) {
-            "Llamatik could not initialize the selected model."
-        }
+        runtime.initialize(modelFile)
 
         mutableUiState.update { state ->
             state.copy(
@@ -147,7 +124,7 @@ class DiariumViewModel(
     }
 
     private fun reportModelError(exception: Throwable) {
-        controller.shutdown()
+        runtime.shutdown()
         mutableUiState.update { state ->
             state.copy(
                 modelStatus = ModelStatus.Error(
@@ -160,22 +137,17 @@ class DiariumViewModel(
         }
     }
 
-    private fun ToolResult.displayText(): String =
-        when (this) {
-            is ToolResult.Success -> content.toString()
-            is ToolResult.Failure -> "Tool execution failed: $message"
-        }
+}
 
-    private fun Throwable.failureMessage(
-        prefix: String,
-        fallback: String,
-    ): String {
-        if (this is CancellationException) {
-            throw this
-        }
-        if (this !is Exception) {
-            throw this
-        }
-        return prefix + (message ?: fallback)
+internal fun Throwable.failureMessage(
+    prefix: String,
+    fallback: String,
+): String {
+    if (this is CancellationException) {
+        throw this
     }
+    if (this !is Exception) {
+        throw this
+    }
+    return prefix + (message ?: fallback)
 }

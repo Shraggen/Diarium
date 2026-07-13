@@ -32,23 +32,32 @@ the source file and Diarium's private copy temporarily coexist.
 5. Wait until the status changes to **Ready**.
 6. Enter: `I inspected hive 4 and saw the queen.`
 7. Select **Process locally**.
+8. Review the proposed `record_inspection` arguments and select **Confirm**.
 
 The expected result is a successful `record_inspection` execution containing
-`hive_id`, `queen_seen`, and `recorded`. The current tool returns this result
-in memory; database persistence is intentionally not part of this milestone.
+`hive_id`, `queen_seen`, and `recorded`. The inspection is stored in Room and
+must remain visible in the inspection journal after force-stopping and
+relaunching the app.
 
 ## Current limitations
 
 - Model acquisition is manual; there is no in-app downloader yet.
 - The model is copied without an import progress percentage.
 - Android is the only verified platform for this milestone.
-- Llamatik 1.8.1's schema-grammar generation path double-accepts sampled
-  tokens and can abort the process on the first JSON token. Diarium therefore
-  supplies the schema in a strict prompt and parses the returned JSON in
-  Kotlin until the native dependency is fixed. Do not treat this temporary
-  path as token-level schema enforcement.
+- Every model-proposed journal write requires explicit confirmation. This is
+  a safety boundary for prompt-guided generation, not a substitute for
+  reliable intent routing.
+- Llamatik's schema-grammar generation path double-accepts sampled tokens and
+  can abort the process on the first JSON token. The behavior was reproduced
+  on both 1.8.1 and 1.9.0. Diarium defaults to `PROMPT_GUIDED`, supplying the
+  schema in a strict prompt and parsing the returned JSON in Kotlin. The
+  explicit `NATIVE_GRAMMAR` mode is retained only for testing a future fix;
+  do not treat the default path as token-level schema enforcement.
 - The crash workaround was verified on an SM-A546B with
   `qwen2.5-0.5b-instruct-q4_0.gguf`: the sample inspection returned
   `{"hive_id":"4","queen_seen":true,"recorded":true}` without a native
   abort. Q4_K_M remains the recommended baseline; broader latency, memory,
   and resource-shutdown measurements are still outstanding.
+- LLM-driven multi-tool routing is deferred. The 0.5B development model
+  misrouted a read request to the mutating record tool during device testing;
+  the journal therefore reads the repository directly for now.

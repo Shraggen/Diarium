@@ -74,6 +74,35 @@ class DiariumKernelTest {
         assertEquals(0, generator.generatedCount)
     }
 
+    @Test
+    fun planningDoesNotExecuteToolBeforeConfirmation() {
+        val generator = FakeGenerator(
+            response = """
+                {
+                    "tool": "counted_action",
+                    "arguments": {"value": "pending"}
+                }
+            """.trimIndent(),
+        )
+        val tool = CountingTool()
+        val kernel = DiariumKernel(
+            registeredTools = listOf(tool),
+            generator = generator,
+        )
+
+        val call = runSuspend {
+            kernel.plan("Plan an action.")
+        }
+
+        assertEquals(0, tool.executionCount)
+
+        runSuspend {
+            kernel.execute(call)
+        }
+
+        assertEquals(1, tool.executionCount)
+    }
+
     private class FakeGenerator(
         private val response: String,
     ) : StructuredJsonGenerator {
@@ -110,6 +139,24 @@ class DiariumKernelTest {
             ToolResult.Success(
                 JsonPrimitive(arguments.string("value")),
             )
+    }
+
+    private class CountingTool : Tool {
+
+        var executionCount = 0
+            private set
+
+        override val specification = tool("counted_action") {
+            description("Executes a counted action.")
+            parameters {
+                stringRequired("value")
+            }
+        }
+
+        override suspend fun execute(arguments: ToolArguments): ToolResult {
+            executionCount += 1
+            return ToolResult.Success(JsonPrimitive(arguments.string("value")))
+        }
     }
 }
 

@@ -15,16 +15,26 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.shraggen.diarium.beekeeping.InspectionRecord
 
 data class DiariumUiState(
     val modelStatus: ModelStatus = ModelStatus.NotLoaded,
     val userInput: String = "",
     val output: String = "",
     val isProcessing: Boolean = false,
+    val recentInspections: List<InspectionRecord> = emptyList(),
+    val journalError: String? = null,
+    val pendingToolCall: PendingToolCall? = null,
+)
+
+data class PendingToolCall(
+    val toolName: String,
+    val arguments: String,
 )
 
 sealed interface ModelStatus {
@@ -49,6 +59,8 @@ fun App(
     onUserInputChanged: (String) -> Unit = {},
     onSelectModel: () -> Unit = {},
     onProcess: () -> Unit = {},
+    onConfirmToolCall: () -> Unit = {},
+    onCancelToolCall: () -> Unit = {},
 ) {
     val modelReady = state.modelStatus is ModelStatus.Ready
     val modelLoading = state.modelStatus is ModelStatus.Loading
@@ -127,6 +139,101 @@ fun App(
                         Text(state.output)
                     }
                 }
+            }
+
+            state.pendingToolCall?.let { pendingCall ->
+                PendingToolCallCard(
+                    call = pendingCall,
+                    isProcessing = state.isProcessing,
+                    onConfirm = onConfirmToolCall,
+                    onCancel = onCancelToolCall,
+                )
+            }
+
+            InspectionJournal(
+                inspections = state.recentInspections,
+                error = state.journalError,
+            )
+        }
+    }
+}
+
+@Composable
+private fun PendingToolCallCard(
+    call: PendingToolCall,
+    isProcessing: Boolean,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Text(
+                text = "Confirm journal write",
+                style = MaterialTheme.typography.titleMedium,
+            )
+            Text("Tool: ${call.toolName}")
+            Text(call.arguments)
+            Text("Nothing is saved until you confirm.")
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(
+                    onClick = onConfirm,
+                    enabled = !isProcessing,
+                ) {
+                    Text("Confirm")
+                }
+                OutlinedButton(
+                    onClick = onCancel,
+                    enabled = !isProcessing,
+                ) {
+                    Text("Cancel")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun InspectionJournal(
+    inspections: List<InspectionRecord>,
+    error: String?,
+) {
+    Text(
+        text = "Inspection journal",
+        style = MaterialTheme.typography.titleLarge,
+    )
+
+    if (error != null) {
+        Text(
+            text = error,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+
+    if (inspections.isEmpty() && error == null) {
+        Text("No inspections recorded yet.")
+    }
+
+    inspections.forEach { inspection ->
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                Text(
+                    text = "Hive ${inspection.hiveId}",
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    if (inspection.queenSeen) {
+                        "Queen seen"
+                    } else {
+                        "Queen not seen"
+                    },
+                )
+                Text("Record #${inspection.id}")
             }
         }
     }
