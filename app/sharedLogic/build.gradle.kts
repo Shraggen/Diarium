@@ -22,20 +22,7 @@ kotlin {
         }
     }
     
-    jvm()
-    
-    js {
-        outputModuleName = "sharedLogic"
-        browser()
-        binaries.library()
-        generateTypeScriptDefinitions()
-        compilerOptions {
-            target = "es2015"
-            optIn.add("kotlin.js.ExperimentalJsExport")
-        }
-    }
-    
-    androidLibrary {
+    android {
        namespace = "com.shraggen.diarium.sharedLogic"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()
@@ -54,13 +41,18 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             api(projects.core)
-            // put your Multiplatform dependencies here
+            implementation(libs.kotlinx.serialization.json)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
         }
-        jsMain.dependencies {
-            implementation(libs.wrappers.browser)
+
+        androidMain.dependencies {
+            implementation(libs.llamatik)
+        }
+
+        iosMain.dependencies {
+            implementation(libs.llamatik)
         }
     }
 }

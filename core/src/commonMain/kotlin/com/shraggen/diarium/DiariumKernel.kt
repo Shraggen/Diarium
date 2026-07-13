@@ -1,23 +1,52 @@
 package com.shraggen.diarium
 
-/**
- * The Voice OS Core. It orchestrates the flow but knows nothing about the domain.
- */
-class DiariumKernel(private val registeredTools: List<DiariumTool>) {
+import com.shraggen.diarium.provider.StructuredJsonGenerator
+import com.shraggen.diarium.provider.llamatik.LlamatikToolCallParser
+import com.shraggen.diarium.provider.llamatik.LlamatikToolMapper
+import com.shraggen.diarium.tool.Tool
+import com.shraggen.diarium.tool.ToolExecutor
+import com.shraggen.diarium.tool.ToolRegistry
+import com.shraggen.diarium.tool.ToolResult
 
-    // This simulates what will eventually happen after the LLM parses the voice input.
-    fun processSimulatedLlmCall(toolName: String, arguments: Map<String, String>): String {
-        val tool = registeredTools.find { it.name == toolName }
-            ?: return "Kernel Error: Tool '$toolName' is not registered."
+class DiariumKernel(
+    registeredTools: List<Tool>,
+    private val generator: StructuredJsonGenerator,
+    private val parser: LlamatikToolCallParser = LlamatikToolCallParser(),
+) {
 
-        return try {
-            tool.execute(arguments)
-        } catch (e: Exception) {
-            "Kernel Error: Tool execution failed - ${e.message}"
+    private val tools = registeredTools.toList()
+
+    private val executor = ToolExecutor(
+        ToolRegistry(tools),
+    )
+
+    init {
+        require(tools.isNotEmpty()) {
+            "DiariumKernel requires at least one registered tool."
+        }
+
+        require(tools.distinctBy { it.specification.name }.size == tools.size) {
+            "Tool names must be unique."
         }
     }
 
-    fun getAvailableTools(): List<String> {
-        return registeredTools.map { it.name }
+    suspend fun process(userInput: String): ToolResult {
+        if (userInput.isBlank()) {
+            return ToolResult.Failure(
+                message = "User input must not be blank.",
+            )
+        }
+
+        val response = generator.generate(
+            prompt = LlamatikToolMapper.promptFor(
+                userInput = userInput,
+                tools = tools,
+            ),
+            schema = LlamatikToolMapper.schemaFor(tools),
+        )
+
+        val call = parser.parse(response)
+
+        return executor.execute(call)
     }
 }

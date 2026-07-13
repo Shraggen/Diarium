@@ -14,14 +14,10 @@ detekt {
 kotlin {
     iosArm64()
     iosSimulatorArm64()
-    
+
     jvm()
-    
-    js {
-        browser()
-    }
-    
-    androidLibrary {
+
+    android {
        namespace = "com.shraggen.diarium.core"
        compileSdk = libs.versions.android.compileSdk.get().toInt()
        minSdk = libs.versions.android.minSdk.get().toInt()

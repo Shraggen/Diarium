@@ -1,20 +1,40 @@
 package com.shraggen.diarium
 
-/**
- * A domain-specific tool. Notice how this class knows about "Hives" and "Queens",
- * but the Kernel has no idea what this is.
- */
-class RecordInspectionTool : DiariumTool {
-    override val name = "record_inspection"
-    override val description = "Records the status of a beehive."
+import com.shraggen.diarium.tool.Tool
+import com.shraggen.diarium.tool.ToolArguments
+import com.shraggen.diarium.tool.ToolResult
+import com.shraggen.diarium.tool.tool
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
-    override fun execute(arguments: Map<String, String>): String {
-        val hiveId = arguments["hive_id"] ?: throw IllegalArgumentException("hive_id is required")
-        val queenSeen = arguments["queen_seen"]?.toBoolean() ?: false
+class RecordInspectionTool : Tool {
 
-        // This is where Room DB / SQLDelight logic will go later.
-        val status = if (queenSeen) "Queen was spotted." else "Queen was NOT seen."
+    override val specification = tool("record_inspection") {
+        description("Records the status of a beehive inspection.")
 
-        return "Success: Logged inspection for Hive $hiveId. $status"
+        parameters {
+            stringRequired("hive_id") {
+                description("Identifier of the inspected hive.")
+            }
+
+            boolean("queen_seen") {
+                description("Whether the queen was observed.")
+            }
+        }
+    }
+
+    override suspend fun execute(
+        arguments: ToolArguments,
+    ): ToolResult {
+        val hiveId = arguments.string("hive_id")
+        val queenSeen = arguments.booleanOrNull("queen_seen") ?: false
+
+        return ToolResult.Success(
+            buildJsonObject {
+                put("hive_id", hiveId)
+                put("queen_seen", queenSeen)
+                put("recorded", true)
+            },
+        )
     }
 }
