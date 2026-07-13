@@ -51,3 +51,91 @@ When development resumes, the infrastructure is ready to receive the AI componen
 
 ***
 ---
+
+## 2026-07-10 — Structured tool execution foundation
+
+### Completed
+
+- Simplified project to a mobile-first Android/iOS architecture.
+- Removed web, server, and desktop application modules.
+- Added provider-neutral tool abstractions in `core`.
+- Added typed JSON Schema AST and builder DSL.
+- Added JSON Schema serialization.
+- Added tool registry, parser, executor, and kernel.
+- Added Llamatik constrained-JSON adapter.
+- Added Android and iOS implementations of
+  `LlamatikStructuredJsonGenerator`.
+- Added `RecordInspectionTool`.
+- Verified the domain/tool path builds and tests pass.
+
+### Current architecture
+
+Android / iOS
+-> sharedUI
+-> sharedLogic
+-> core
+
+`core` contains provider-neutral tool and schema logic.
+
+`sharedLogic` contains application orchestration and Llamatik integration.
+
+`sharedUI` contains shared presentation code.
+
+### Important decision
+
+Llamatik does not expose a dedicated tool-calling API in the current
+integration. Diarium uses `generateJson` with a constrained tool-call
+envelope:
+
+{
+"tool": "<registered tool name>",
+"arguments": { ... }
+}
+
+The schema DSL exists to keep domain tools independent of Llamatik's
+JSON representation.
+
+### Next milestone
+
+Run one real end-to-end tool call on Android using an actual local model.
+
+Steps:
+
+1. Decide and document model files used for development.
+2. Add model acquisition or bundled-development-model handling.
+3. Initialize Llamatik outside Compose UI code.
+4. Introduce an application-level state holder.
+5. Pass user text to `DiariumKernel.process`.
+6. Display loading, success, and failure states.
+7. Verify `RecordInspectionTool` executes on a physical Android device.
+8. Shut down model resources correctly.
+
+### After that
+
+Rebuild the original Beekeeper voice workflow:
+
+microphone
+-> recorded WAV
+-> Whisper transcription
+-> DiariumKernel
+-> tool execution
+-> persisted journal data
+-> optional spoken confirmation
+
+### Do not do next
+
+- no additional schema DSL features
+- no retries
+- no multi-agent loop
+- no desktop or web support
+- no provider abstraction beyond what the running path requires
+- no UI polishing before real model inference works
+
+### Verification
+
+Run:
+
+./gradlew :core:jvmTest
+./gradlew :app:sharedLogic:assemble
+./gradlew :app:androidApp:assembleDebug
+./gradlew detekt

@@ -14,11 +14,6 @@ import androidx.compose.ui.unit.dp
 fun App() {
     MaterialTheme {
         // 1. Initialize our Skeleton
-        val kernel = remember {
-            DiariumKernel(
-                registeredTools = listOf(RecordInspectionTool()) // Injecting the Plugin!
-            )
-        }
 
         var outputLog by remember { mutableStateOf("Kernel Booted. Waiting for command...") }
 
@@ -36,27 +31,11 @@ fun App() {
                 style = MaterialTheme.typography.headlineSmall
             )
 
-            Text("Registered Tools: ${kernel.getAvailableTools().joinToString()}")
 
             // Simulate the LLM deciding to call a tool based on "I saw the queen in hive 4"
-            Button(onClick = {
-                outputLog = kernel.processSimulatedLlmCall(
-                    toolName = "record_inspection",
-                    arguments = mapOf("hive_id" to "4", "queen_seen" to "true")
-                )
-            }) {
-                Text("Simulate LLM: 'I saw the queen in hive 4'")
-            }
+
 
             // Simulate an invalid LLM hallucination
-            Button(onClick = {
-                outputLog = kernel.processSimulatedLlmCall(
-                    toolName = "launch_nukes",
-                    arguments = emptyMap()
-                )
-            }) {
-                Text("Simulate LLM Hallucination")
-            }
 
             // Output Console
             Box(
