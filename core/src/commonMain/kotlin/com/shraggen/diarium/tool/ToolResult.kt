@@ -1,6 +1,6 @@
 package com.shraggen.diarium.tool
 
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonElement
 
 sealed interface ToolResult {
 

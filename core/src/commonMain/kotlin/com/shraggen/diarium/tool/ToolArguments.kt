@@ -1,6 +1,9 @@
 package com.shraggen.diarium.tool
 
-import kotlinx.serialization.json.*
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.jvm.JvmInline
 
 @JvmInline

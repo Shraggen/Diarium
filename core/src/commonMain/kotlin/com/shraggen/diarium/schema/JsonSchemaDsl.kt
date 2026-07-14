@@ -3,6 +3,7 @@ package com.shraggen.diarium.schema
 fun obj(block: JsonObjectBuilder.() -> Unit): JsonObjectSchema =
     JsonObjectBuilder().apply(block).build()
 
+@Suppress("TooManyFunctions")
 class JsonObjectBuilder {
 
     private val properties = linkedMapOf<String, JsonSchema>()
