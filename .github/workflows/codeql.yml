@@ -41,6 +41,7 @@ jobs:
       with:
         java-version: '21'
         distribution: 'jetbrains'
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Setup Gradle Cache
       if: matrix.language == 'java-kotlin'

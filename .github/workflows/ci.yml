@@ -28,6 +28,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'jetbrains'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
@@ -86,6 +88,8 @@ jobs:
         with:
           java-version: '21'
           distribution: 'jetbrains'
+          token: ${{ secrets.GITHUB_TOKEN }}
+          cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
@@ -132,6 +136,7 @@ jobs:
           java-version: '21'
           distribution: 'jetbrains'
           token: ${{ secrets.GITHUB_TOKEN }}
+          cache: gradle
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
