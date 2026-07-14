@@ -355,3 +355,56 @@ round trip still needs one unlocked-device pass in English, German, Serbian
 Latin, and Serbian Cyrillic. The native model/VAD/lifecycle pieces are verified;
 speech-recognition quality and real apiary acoustics remain acceptance tests,
 not claims made by the automated suite.
+
+---
+
+## 2026-07-14 — Multilingual field acceptance and next-session handoff
+
+### Field acceptance completed
+
+The application owner tested real microphone capture through persistence in
+English, German, and Serbian and reported that the complete flow works well.
+This closes the outstanding human-spoken acceptance item from the voice
+milestone. Recognition is occasionally imperfect, after which the small local
+LLM can misunderstand the damaged transcript. Larger multilingual models are a
+candidate improvement, not a substitute for deterministic safety checks.
+
+One supplied Serbian screenshot is an important regression lead. Its transcript
+contains `košnica, pet` (`hive, five`) while the visible persisted result is
+`hive_id: "4"`. Reproduce the exact utterance before concluding which model
+introduced the disagreement, but treat explicit identifier disagreement as a
+blocking condition rather than allowing the LLM to guess.
+
+### Documentation overhaul
+
+- Replaced the mostly empty arc42 template with a project-specific architecture
+  document covering all twelve sections.
+- Added ADRs for the microkernel, plan/confirm/execute safety boundary,
+  prompt-guided JSON workaround, independent native-model lifecycles, and
+  offline-first persistence with deferred synchronization.
+- Added a project-structure guide explaining the combined Gradle, KMP, Kotlin,
+  reverse-domain package, and feature directory hierarchy.
+
+### Start here next session
+
+Objective: make multilingual tool interpretation trustworthy before expanding
+the beekeeping feature set.
+
+1. Add a pure common Kotlin identifier-consistency component between planning
+   and confirmation. It should conservatively extract explicit hive identifiers
+   from the transcript and compare them with `record_inspection.hive_id`.
+2. Cover Arabic digits and unambiguous number words used in English, German,
+   Serbian Latin, and Serbian Cyrillic. Prefer “cannot verify” over guessing.
+3. If transcript and proposal disagree, block confirmation and show both values
+   in localized, human-readable copy. Do not silently rewrite a model proposal.
+4. Replace the raw JSON confirmation with domain-aware labels for Hive and
+   Queen seen while retaining the exact tool-call data for diagnostics.
+5. Add a table-driven multilingual evaluation corpus: valid commands, noisy
+   transcripts, missing identifiers, contradictions, malformed JSON, cancel,
+   and successful confirmed persistence.
+6. Re-run unit/KMP/instrumentation gates and repeat the Serbian physical phrase.
+
+After that guardrail is green, add model profiles and compare multilingual
+Whisper base versus small plus the current 0.5B command model versus a stronger
+candidate. Measure accuracy, latency, memory, thermal behavior, and battery on
+the same fixed corpus before changing the default.

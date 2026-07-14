@@ -1,9 +1,16 @@
-site_name: Arc42 Docs
+site_name: Diarium documentation
 theme:
   name: material
 
 nav:
-  - Home: docs/architecture.md
-  - Development models: docs/development-model.md
-  - Testing: docs/testing.md
-  - Journal: docs/journal.md
+  - Architecture: architecture.md
+  - Project structure: project-structure.md
+  - Decisions:
+      - Microkernel tools: decisions/0001-microkernel-tool-contracts.md
+      - Plan, confirm, execute: decisions/0002-plan-confirm-execute.md
+      - Prompt-guided JSON: decisions/0003-prompt-guided-json.md
+      - Native model lifecycles: decisions/0004-separate-native-model-lifecycles.md
+      - Offline first, sync later: decisions/0005-offline-first-sync-later.md
+  - Development models: development-model.md
+  - Testing: testing.md
+  - Journal: journal.md
