@@ -27,7 +27,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '21'
-          distribution: 'jetbrains'
+          distribution: 'temurin'
           token: ${{ secrets.GITHUB_TOKEN }}
           cache: gradle
 
@@ -87,7 +87,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '21'
-          distribution: 'jetbrains'
+          distribution: 'temurin'
           token: ${{ secrets.GITHUB_TOKEN }}
           cache: gradle
 
@@ -134,7 +134,7 @@ jobs:
         uses: actions/setup-java@v5
         with:
           java-version: '21'
-          distribution: 'jetbrains'
+          distribution: 'temurin'
           token: ${{ secrets.GITHUB_TOKEN }}
           cache: gradle
 
