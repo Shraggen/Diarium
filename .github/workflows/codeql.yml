@@ -27,10 +27,8 @@ jobs:
           build-mode: none
         - language: java-kotlin
           build-mode: manual
-        - language: javascript-typescript
-          build-mode: none
         - language: swift
-          build-mode: autobuild
+          build-mode: manual
 
     steps:
     - name: Checkout repository
@@ -38,14 +36,14 @@ jobs:
 
     # 1. Prepare environment for Kotlin/Java compilation
     - name: Set up JDK 21
-      if: matrix.language == 'java-kotlin'
+      if: matrix.language != 'actions'
       uses: actions/setup-java@v5
       with:
         java-version: '21'
         distribution: 'jetbrains'
 
     - name: Setup Gradle Cache
-      if: matrix.language == 'java-kotlin'
+      if: matrix.language != 'actions'
       uses: gradle/actions/setup-gradle@v6
 
     # 2. Initialize CodeQL
@@ -62,12 +60,22 @@ jobs:
       run: |
         if [ "${{ matrix.language }}" = "java-kotlin" ]; then
           chmod +x gradlew
-          # Compile the Kotlin source code to JVM/Android classes for indexing
-          # Skips running tests, architecture tests (Konsist), detekt checks, and iOS targets which would fail on Linux
-          ./gradlew compileKotlin -x test --no-daemon
+          ./gradlew \
+            :core:compileKotlinJvm \
+            :core:compileAndroidMain \
+            :app:sharedLogic:compileAndroidMain \
+            :app:sharedUI:compileAndroidMain \
+            :app:androidApp:compileDebugKotlin \
+            --stacktrace --no-daemon
         elif [ "${{ matrix.language }}" = "swift" ]; then
-          # Placeholder template if Swift is ever switched to a manual build
-          echo "Xcodebuild commands go here if Swift autobuild is disabled"
+          xcodebuild \
+            -project app/iosApp/iosApp.xcodeproj \
+            -scheme iosApp \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build/codeql-ios-derived-data \
+            CODE_SIGNING_ALLOWED=NO \
+            build
         else
           echo "No manual build needed for ${{ matrix.language }}"
         fi

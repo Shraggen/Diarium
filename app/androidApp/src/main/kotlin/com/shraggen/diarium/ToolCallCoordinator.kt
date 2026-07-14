@@ -2,6 +2,7 @@ package com.shraggen.diarium
 
 import com.shraggen.diarium.tool.ToolCall
 import com.shraggen.diarium.tool.ToolResult
+import com.shraggen.diarium.speech.SpeechLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -16,8 +17,12 @@ class ToolCallCoordinator(
     private var plannedCall: ToolCall? = null
 
     fun updateUserInput(value: String) {
+        plannedCall = null
         mutableUiState.update { state ->
-            state.copy(userInput = value)
+            state.copy(
+                userInput = value,
+                pendingToolCall = null,
+            )
         }
     }
 
@@ -98,11 +103,21 @@ class ToolCallCoordinator(
         mutableUiState.update { state ->
             state.copy(
                 pendingToolCall = null,
-                output = "Proposed action cancelled. Nothing was recorded.",
+                output = cancellationMessage(state.selectedLanguage),
             )
         }
     }
 }
+
+private fun cancellationMessage(language: SpeechLanguage): String =
+    when (language) {
+        SpeechLanguage.ENGLISH ->
+            "Proposed action cancelled. Nothing was recorded."
+        SpeechLanguage.GERMAN ->
+            "Vorgeschlagene Aktion abgebrochen. Es wurde nichts gespeichert."
+        SpeechLanguage.SERBIAN ->
+            "Предложена радња је отказана. Ништа није сачувано."
+    }
 
 private fun ToolCall.toPendingCall() = PendingToolCall(
     toolName = toolName,

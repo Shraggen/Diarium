@@ -1,5 +1,7 @@
 package com.shraggen.diarium
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -19,7 +21,23 @@ class MainActivity : ComponentActivity() {
     private val modelPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
-        uri?.let(viewModel::loadModel)
+        uri?.let(viewModel.llmModels::load)
+    }
+
+    private val whisperModelPicker = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        uri?.let(viewModel.voiceInput::loadModel)
+    }
+
+    private val microphonePermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { granted ->
+        if (granted) {
+            viewModel.voiceInput.start()
+        } else {
+            viewModel.voiceInput.reportPermissionDenied()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,14 +49,34 @@ class MainActivity : ComponentActivity() {
 
             App(
                 state = state,
-                onUserInputChanged = viewModel::updateUserInput,
+                onUserInputChanged = viewModel.toolCalls::updateUserInput,
                 onSelectModel = {
                     modelPicker.launch(arrayOf("*/*"))
                 },
-                onProcess = viewModel::processInput,
-                onConfirmToolCall = viewModel::confirmToolCall,
-                onCancelToolCall = viewModel::cancelToolCall,
+                onSelectWhisperModel = {
+                    whisperModelPicker.launch(arrayOf("*/*"))
+                },
+                onLanguageChanged = viewModel.voiceInput::updateLanguage,
+                onVoiceInput = ::handleVoiceInput,
+                onProcess = viewModel.toolCalls::plan,
+                onConfirmToolCall = viewModel.toolCalls::confirm,
+                onCancelToolCall = viewModel.toolCalls::cancel,
             )
+        }
+    }
+
+    private fun handleVoiceInput() {
+        if (viewModel.uiState.value.voiceStatus is VoiceStatus.Recording) {
+            viewModel.voiceInput.stop()
+            return
+        }
+
+        if (checkSelfPermission(Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            viewModel.voiceInput.start()
+        } else {
+            microphonePermission.launch(Manifest.permission.RECORD_AUDIO)
         }
     }
 }

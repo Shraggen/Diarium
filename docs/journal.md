@@ -293,3 +293,65 @@ only after **Confirm** was selected.
 Integrate microphone capture and Llamatik Whisper as an input adapter for the
 existing text-to-kernel-to-persistent-journal path. Keep hotword detection,
 TTS, multi-turn interaction, and production model downloading deferred.
+
+---
+
+## 2026-07-13 — Voice-to-persistent-journal milestone
+
+### Completed
+
+- Added Android 16 kHz mono PCM16 microphone capture with a 30-second cap.
+- Added Silero VAD 2.0.10 with 512-sample frames, minimum speech filtering,
+  and automatic stop after 900 ms of sustained non-speech.
+- Added an independent Whisper `.bin` model importer, private model storage,
+  model restoration, native lifecycle, and temporary WAV cleanup.
+- Integrated Llamatik 1.9 segmented Whisper transcription with
+  `translate = false` into the existing plan → confirm → Room path.
+- Kept Whisper and LLM model lifecycles independent and split Android state
+  ownership into LLM, voice, tool-call, speech-runtime, and app-runtime
+  components to satisfy the architecture fitness limits.
+- Added user-selectable English, German, and Serbian modes plus localized
+  English, German, and Serbian Cyrillic UI copy.
+- Added Serbian Latin/Cyrillic vocabulary prompting and explicit multilingual
+  examples to tool routing. Identifiers must be preserved and never invented.
+- Confirmed by inspecting Llamatik 1.9 sources and artifacts that its wrapper
+  exposes Whisper transcription but not Silero/whisper.cpp VAD. Silero remains
+  a replaceable Android capture adapter.
+- Documented the later shared-apiary collaboration requirements without
+  implementing a backend or premature conflict policy.
+
+### Test and CI improvements
+
+- Added unit tests for multilingual transcript parsing, Serbian Unicode,
+  language selection, and Whisper-compatible PCM WAV encoding.
+- Added an integration test proving a Serbian Cyrillic transcript can flow
+  through kernel planning while persistence remains empty until execution.
+- Added Android instrumentation tests for Room ordering/persistence, Activity
+  launch, bundled Silero ONNX inference, and optional provisioned Whisper
+  initialization through Llamatik.
+- Fixed an instrumentation-only coroutines 1.11/1.9 runtime mismatch by
+  declaring the app's direct Android coroutine dependency explicitly.
+- Expanded CI to run Detekt, Konsist/JVM/KMP tests, Android lint/build,
+  API 35 emulator tests, an iOS simulator build, artifacts, timeouts, and
+  stale-run cancellation.
+- Improved CodeQL manual builds to compile actual Kotlin/Android/Swift targets
+  and removed the unused JavaScript product-language scan.
+
+### Verification completed
+
+- `./gradlew :core:jvmTest :app:sharedLogic:allTests`
+- `./gradlew :app:androidApp:detekt :app:androidApp:compileDebugKotlin`
+- `./gradlew :app:androidApp:connectedDebugAndroidTest`
+- Four instrumentation tests passed on SM-A546B with zero failures and zero
+  skips, including Llamatik initialization of a SHA-256-verified multilingual
+  `ggml-base-q5_1.bin` and native Silero inference.
+- The final APK was reinstalled after instrumentation and both the existing
+  Qwen GGUF and multilingual Whisper model were restored to private storage.
+
+### Remaining physical acceptance
+
+The device was locked during the automated run, so a human-spoken microphone
+round trip still needs one unlocked-device pass in English, German, Serbian
+Latin, and Serbian Cyrillic. The native model/VAD/lifecycle pieces are verified;
+speech-recognition quality and real apiary acoustics remain acceptance tests,
+not claims made by the automated suite.

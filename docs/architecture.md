@@ -95,9 +95,9 @@ graph TD
 We chose a Microkernel Architecture over a Pipeline or Service-Based architecture to support maximum extensibility. The `Core` acts as an offline Voice OS, while specific professions (Beekeepers, Mechanics) are injected as Plugins.
 
 **Contained Building Blocks:**  
-* **Diarium Core:** Contains the LLM Orchestration, STT/TTS bridges (planned), and Tool Routing. Knows nothing about bees or cars.
+* **Diarium Core:** Contains LLM orchestration and tool routing. It knows nothing about bees, cars, Android audio, or Room.
 * **Domain Plugins (`sharedLogic`):** Contains the JSON Schema definitions and database execution logic for specific tasks.
-* **App Layer (`sharedUI`):** Wires the Plugins into the Core upon startup via Dependency Injection.
+* **App Layer:** `sharedUI` renders portable state. The Android app owns microphone capture, Silero VAD, Llamatik Whisper, model storage, Room, and lifecycle coordinators.
 
 ## Whitebox Overall System
 
@@ -172,12 +172,20 @@ Important Interfaces
 
 # Runtime View
 
-## \<Runtime Scenario 1\>
+## Voice inspection write
 
-- *\<insert runtime diagram or textual description of the scenario\>*
-
-- *\<insert description of the notable aspects of the interactions
-  between the building block instances depicted in this diagram.\>*
+1. Android records 16 kHz mono PCM16 frames.
+2. Bundled Silero VAD detects an utterance and ends capture after sustained
+   silence; a 30-second cap prevents unbounded recording.
+3. The temporary WAV is transcribed locally by Llamatik Whisper without
+   translation. The selected language is `en`, `de`, or `sr`.
+4. The transcript is placed in the editable command field and sent to
+   `DiariumKernel.plan`.
+5. The UI displays the exact proposed tool name and arguments. No mutation has
+   occurred yet.
+6. Only explicit confirmation calls `DiariumKernel.execute`, whose deterministic
+   `RecordInspectionTool` writes through `InspectionRepository` to Room.
+7. The temporary WAV is deleted and the persisted journal is refreshed.
 
 ## \<Runtime Scenario 2\>
 
@@ -259,6 +267,31 @@ We will implement a KMP-based **Microkernel Architecture** utilizing LLM Tool Ca
 ## Quality Scenarios
 
 # Risks and Technical Debts
+
+## Future collaboration and synchronization
+
+Centralized synchronization is intentionally deferred, but the data model must
+evolve before multiple workers share an apiary. A compatible design needs:
+
+- globally unique inspection, apiary/workspace, actor, and device identifiers;
+- stable `apiary_id` ownership on every domain record;
+- server-recognized creation/update timestamps, record versions, and tombstones;
+- idempotency keys plus a durable local outbox so retries cannot duplicate work;
+- optimistic concurrency and explicit conflict policy instead of last-write
+  wins for safety-relevant fields;
+- membership/role enforcement, audit history, encryption, and revocation;
+- Room migrations that preserve offline-first behavior while adding sync state.
+
+Do not retrofit synchronization by using current auto-increment Room IDs as
+global identity. The collaboration protocol, conflict semantics, and schema
+migration require their own ADR and threat model before backend implementation.
+
+## Multilingual inference risk
+
+Whisper and the local LLM are probabilistic. The confirmation boundary is
+language-independent and remains mandatory for every mutation. Release
+acceptance must cover English, German, Serbian Latin, and Serbian Cyrillic;
+source text and identifiers must never be silently translated or invented.
 
 # Glossary
 

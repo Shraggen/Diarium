@@ -21,14 +21,14 @@ class AndroidDiariumRuntime(
     private val controller = DiariumController(inspectionRepository)
     private val modelStore = AndroidModelStore(application)
 
-    fun newestModel(): File? = modelStore.newestModel()
+    fun newestLlmModel(): File? = modelStore.newestModel(StoredModelType.LLM)
 
-    suspend fun importModel(uri: Uri): File = withContext(Dispatchers.IO) {
+    suspend fun importLlmModel(uri: Uri): File = withContext(Dispatchers.IO) {
         controller.shutdown()
-        modelStore.importModel(uri)
+        modelStore.importModel(uri, StoredModelType.LLM)
     }
 
-    suspend fun initialize(modelFile: File) = withContext(Dispatchers.IO) {
+    suspend fun initializeLlm(modelFile: File) = withContext(Dispatchers.IO) {
         check(controller.initialize(modelFile.absolutePath)) {
             "Llamatik could not initialize the selected model."
         }

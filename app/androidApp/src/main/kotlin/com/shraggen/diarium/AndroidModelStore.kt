@@ -10,15 +10,21 @@ internal class AndroidModelStore(
     private val application: Application,
 ) {
 
-    fun newestModel(): File? =
-        modelsDirectory()
+    fun newestModel(type: StoredModelType): File? =
+        type.directory(application)
             .listFiles { file ->
-                file.extension.equals("gguf", ignoreCase = true)
+                file.extension.equals(type.extension, ignoreCase = true)
             }
             ?.maxByOrNull(File::lastModified)
 
-    fun importModel(uri: Uri): File {
-        val target = targetFile(uri)
+    fun importModel(
+        uri: Uri,
+        type: StoredModelType,
+    ): File {
+        val target = targetFile(
+            uri = uri,
+            type = type,
+        )
         val partialTarget = File(target.parentFile, "${target.name}.part")
         removeIncompleteImport(partialTarget)
         copySelectedModel(uri, partialTarget)
@@ -26,17 +32,22 @@ internal class AndroidModelStore(
         return target
     }
 
-    private fun targetFile(uri: Uri): File {
-        val displayName = modelDisplayName(uri)
-        require(displayName.endsWith(".gguf", ignoreCase = true)) {
-            "Select a .gguf model file."
+    private fun targetFile(
+        uri: Uri,
+        type: StoredModelType,
+    ): File {
+        val displayName = modelDisplayName(uri, type.fallbackName)
+        require(displayName.endsWith(".${type.extension}", ignoreCase = true)) {
+            "Select a .${type.extension} model file."
         }
 
-        return File(availableModelsDirectory(), sanitizeFileName(displayName))
+        return File(
+            availableModelsDirectory(type.directory(application)),
+            sanitizeFileName(displayName),
+        )
     }
 
-    private fun availableModelsDirectory(): File {
-        val directory = modelsDirectory()
+    private fun availableModelsDirectory(directory: File): File {
         check(directory.exists() || directory.mkdirs()) {
             "Could not create the model directory."
         }
@@ -83,7 +94,7 @@ internal class AndroidModelStore(
         }
     }
 
-    private fun modelDisplayName(uri: Uri): String =
+    private fun modelDisplayName(uri: Uri, fallbackName: String): String =
         application.contentResolver.query(
             uri,
             arrayOf(OpenableColumns.DISPLAY_NAME),
@@ -96,7 +107,7 @@ internal class AndroidModelStore(
             } else {
                 null
             }
-        } ?: uri.lastPathSegment ?: "development-model.gguf"
+        } ?: uri.lastPathSegment ?: fallbackName
 
     private fun sanitizeFileName(value: String): String =
         value
@@ -104,10 +115,28 @@ internal class AndroidModelStore(
             .substringAfterLast('\\')
             .replace(UNSAFE_FILE_NAME_CHARACTER, "_")
 
-    private fun modelsDirectory(): File =
-        File(application.filesDir, "models")
-
     private companion object {
         val UNSAFE_FILE_NAME_CHARACTER = Regex("[^A-Za-z0-9._-]")
     }
+}
+
+internal enum class StoredModelType(
+    val directoryName: String,
+    val extension: String,
+    val fallbackName: String,
+) {
+    LLM(
+        directoryName = "models",
+        extension = "gguf",
+        fallbackName = "development-model.gguf",
+    ),
+    WHISPER(
+        directoryName = "whisper-models",
+        extension = "bin",
+        fallbackName = "whisper-model.bin",
+    ),
+    ;
+
+    fun directory(application: Application): File =
+        File(application.filesDir, directoryName)
 }

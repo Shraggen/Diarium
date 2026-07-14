@@ -4,3 +4,6 @@ theme:
 
 nav:
   - Home: docs/architecture.md
+  - Development models: docs/development-model.md
+  - Testing: docs/testing.md
+  - Journal: docs/journal.md

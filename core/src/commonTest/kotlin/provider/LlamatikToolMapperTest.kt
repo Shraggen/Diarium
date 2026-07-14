@@ -11,6 +11,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertContains
 
 class LlamatikToolMapperTest {
 
@@ -43,6 +44,20 @@ class LlamatikToolMapperTest {
                 .jsonPrimitive
                 .content,
         )
+    }
+
+    @Test
+    fun promptExplicitlySupportsGermanAndBothSerbianScripts() {
+        val prompt = LlamatikToolMapper.promptFor(
+            userInput = "Прегледао сам кошницу 4 и видео матицу.",
+            tools = listOf(TestTool),
+        )
+
+        assertContains(prompt, "Bienenstock 4")
+        assertContains(prompt, "košnicu 4")
+        assertContains(prompt, "кошницу 4")
+        assertContains(prompt, "preserve identifiers exactly")
+        assertContains(prompt, "Never invent")
     }
 
     private object TestTool : Tool {

@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.shraggen.diarium.beekeeping.InspectionRecord
+import com.shraggen.diarium.speech.SpeechLanguage
 
 data class DiariumUiState(
     val modelStatus: ModelStatus = ModelStatus.NotLoaded,
@@ -30,6 +31,10 @@ data class DiariumUiState(
     val recentInspections: List<InspectionRecord> = emptyList(),
     val journalError: String? = null,
     val pendingToolCall: PendingToolCall? = null,
+    val speechModelStatus: SpeechModelStatus = SpeechModelStatus.NotLoaded,
+    val voiceStatus: VoiceStatus = VoiceStatus.Idle,
+    val selectedLanguage: SpeechLanguage = SpeechLanguage.ENGLISH,
+    val detectedSpeechLanguage: String? = null,
 )
 
 data class PendingToolCall(
@@ -53,17 +58,45 @@ sealed interface ModelStatus {
     ) : ModelStatus
 }
 
+sealed interface SpeechModelStatus {
+    data object NotLoaded : SpeechModelStatus
+
+    data class Loading(val message: String) : SpeechModelStatus
+
+    data class Ready(val modelName: String) : SpeechModelStatus
+
+    data class Error(val message: String) : SpeechModelStatus
+}
+
+sealed interface VoiceStatus {
+    data object Idle : VoiceStatus
+
+    data object Recording : VoiceStatus
+
+    data object Transcribing : VoiceStatus
+
+    data class Error(val message: String) : VoiceStatus
+}
+
 @Composable
 fun App(
     state: DiariumUiState = DiariumUiState(),
     onUserInputChanged: (String) -> Unit = {},
     onSelectModel: () -> Unit = {},
+    onSelectWhisperModel: () -> Unit = {},
+    onLanguageChanged: (SpeechLanguage) -> Unit = {},
+    onVoiceInput: () -> Unit = {},
     onProcess: () -> Unit = {},
     onConfirmToolCall: () -> Unit = {},
     onCancelToolCall: () -> Unit = {},
 ) {
     val modelReady = state.modelStatus is ModelStatus.Ready
     val modelLoading = state.modelStatus is ModelStatus.Loading
+    val speechModelReady = state.speechModelStatus is SpeechModelStatus.Ready
+    val speechModelLoading = state.speechModelStatus is SpeechModelStatus.Loading
+    val recording = state.voiceStatus is VoiceStatus.Recording
+    val transcribing = state.voiceStatus is VoiceStatus.Transcribing
+    val copy = copyFor(state.selectedLanguage)
 
     MaterialTheme {
         Column(
@@ -76,12 +109,12 @@ fun App(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Text(
-                text = "Diarium local tool call",
+                text = copy.title,
                 style = MaterialTheme.typography.headlineSmall,
             )
 
             Text(
-                text = modelStatusText(state.modelStatus),
+                text = modelStatusText(state.modelStatus, copy),
                 color = when (state.modelStatus) {
                     is ModelStatus.Error -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.onBackground
@@ -90,38 +123,82 @@ fun App(
 
             Button(
                 onClick = onSelectModel,
-                enabled = !modelLoading && !state.isProcessing,
+                enabled = !modelLoading && !state.isProcessing && !recording && !transcribing,
             ) {
-                Text(if (modelReady) "Change GGUF model" else "Select GGUF model")
+                Text(if (modelReady) copy.changeLlm else copy.selectLlm)
             }
+
+            Text(
+                text = speechModelStatusText(state.speechModelStatus, copy),
+                color = when (state.speechModelStatus) {
+                    is SpeechModelStatus.Error -> MaterialTheme.colorScheme.error
+                    else -> MaterialTheme.colorScheme.onBackground
+                },
+            )
+
+            Button(
+                onClick = onSelectWhisperModel,
+                enabled = !speechModelLoading && !state.isProcessing && !recording && !transcribing,
+            ) {
+                Text(if (speechModelReady) copy.changeWhisper else copy.selectWhisper)
+            }
+
+            LanguageSelector(
+                selected = state.selectedLanguage,
+                label = copy.language,
+                enabled = !state.isProcessing && !recording && !transcribing,
+                onLanguageChanged = onLanguageChanged,
+            )
 
             OutlinedTextField(
                 value = state.userInput,
                 onValueChange = onUserInputChanged,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = modelReady && !state.isProcessing,
-                label = { Text("Command") },
+                enabled = modelReady && !state.isProcessing && !recording && !transcribing,
+                label = { Text(copy.command) },
                 placeholder = {
-                    Text("I inspected hive 4 and saw the queen.")
+                    Text(copy.commandPlaceholder)
                 },
                 minLines = 3,
             )
 
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Button(
                     onClick = onProcess,
+                    modifier = Modifier.fillMaxWidth(),
                     enabled = modelReady &&
                         state.userInput.isNotBlank() &&
-                        !state.isProcessing,
+                        !state.isProcessing &&
+                        !recording &&
+                        !transcribing,
                 ) {
-                    Text("Process locally")
+                    Text(copy.process)
                 }
 
-                if (modelLoading || state.isProcessing) {
-                    CircularProgressIndicator()
+                Button(
+                    onClick = onVoiceInput,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = if (recording) {
+                        true
+                    } else {
+                        modelReady && speechModelReady && !state.isProcessing && !transcribing
+                    },
+                ) {
+                    Text(if (recording) copy.stopRecording else copy.recordVoice)
                 }
+            }
+
+            if (modelLoading || speechModelLoading || state.isProcessing || transcribing) {
+                CircularProgressIndicator()
+            }
+
+            VoiceStatusText(state.voiceStatus, copy)
+
+            state.detectedSpeechLanguage?.let { language ->
+                Text("${copy.detectedLanguage}: $language")
             }
 
             if (state.output.isNotBlank()) {
@@ -133,7 +210,7 @@ fun App(
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = "Result",
+                            text = copy.result,
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(state.output)
@@ -147,12 +224,14 @@ fun App(
                     isProcessing = state.isProcessing,
                     onConfirm = onConfirmToolCall,
                     onCancel = onCancelToolCall,
+                    copy = copy,
                 )
             }
 
             InspectionJournal(
                 inspections = state.recentInspections,
                 error = state.journalError,
+                copy = copy,
             )
         }
     }
@@ -164,6 +243,7 @@ private fun PendingToolCallCard(
     isProcessing: Boolean,
     onConfirm: () -> Unit,
     onCancel: () -> Unit,
+    copy: AppCopy,
 ) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
@@ -171,24 +251,24 @@ private fun PendingToolCallCard(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = "Confirm journal write",
+                text = copy.confirmWrite,
                 style = MaterialTheme.typography.titleMedium,
             )
-            Text("Tool: ${call.toolName}")
+            Text("${copy.tool}: ${call.toolName}")
             Text(call.arguments)
-            Text("Nothing is saved until you confirm.")
+            Text(copy.nothingSaved)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onConfirm,
                     enabled = !isProcessing,
                 ) {
-                    Text("Confirm")
+                    Text(copy.confirm)
                 }
                 OutlinedButton(
                     onClick = onCancel,
                     enabled = !isProcessing,
                 ) {
-                    Text("Cancel")
+                    Text(copy.cancel)
                 }
             }
         }
@@ -199,9 +279,10 @@ private fun PendingToolCallCard(
 private fun InspectionJournal(
     inspections: List<InspectionRecord>,
     error: String?,
+    copy: AppCopy,
 ) {
     Text(
-        text = "Inspection journal",
+        text = copy.journal,
         style = MaterialTheme.typography.titleLarge,
     )
 
@@ -213,7 +294,7 @@ private fun InspectionJournal(
     }
 
     if (inspections.isEmpty() && error == null) {
-        Text("No inspections recorded yet.")
+        Text(copy.emptyJournal)
     }
 
     inspections.forEach { inspection ->
@@ -223,26 +304,71 @@ private fun InspectionJournal(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Text(
-                    text = "Hive ${inspection.hiveId}",
+                    text = "${copy.hive} ${inspection.hiveId}",
                     style = MaterialTheme.typography.titleMedium,
                 )
                 Text(
                     if (inspection.queenSeen) {
-                        "Queen seen"
+                        copy.queenSeen
                     } else {
-                        "Queen not seen"
+                        copy.queenNotSeen
                     },
                 )
-                Text("Record #${inspection.id}")
+                Text("${copy.record} #${inspection.id}")
             }
         }
     }
 }
 
-private fun modelStatusText(status: ModelStatus): String =
+@Composable
+private fun LanguageSelector(
+    selected: SpeechLanguage,
+    label: String,
+    enabled: Boolean,
+    onLanguageChanged: (SpeechLanguage) -> Unit,
+) {
+    Text(label, style = MaterialTheme.typography.titleMedium)
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        SpeechLanguage.entries.forEach { language ->
+            OutlinedButton(
+                onClick = { onLanguageChanged(language) },
+                enabled = enabled && selected != language,
+            ) {
+                Text(language.whisperCode.uppercase())
+            }
+        }
+    }
+    Text(selected.displayName)
+}
+
+@Composable
+private fun VoiceStatusText(status: VoiceStatus, copy: AppCopy) {
     when (status) {
-        ModelStatus.NotLoaded -> "Select an instruction-tuned GGUF model to begin."
+        VoiceStatus.Idle -> Unit
+        VoiceStatus.Recording -> Text(copy.listening)
+        VoiceStatus.Transcribing -> Text(copy.transcribing)
+        is VoiceStatus.Error -> Text(
+            text = status.message,
+            color = MaterialTheme.colorScheme.error,
+        )
+    }
+}
+
+private fun modelStatusText(status: ModelStatus, copy: AppCopy): String =
+    when (status) {
+        ModelStatus.NotLoaded -> copy.llmMissing
         is ModelStatus.Loading -> status.message
-        is ModelStatus.Ready -> "Ready: ${status.modelName}"
+        is ModelStatus.Ready -> "${copy.ready}: ${status.modelName}"
         is ModelStatus.Error -> status.message
+    }
+
+private fun speechModelStatusText(
+    status: SpeechModelStatus,
+    copy: AppCopy,
+): String =
+    when (status) {
+        SpeechModelStatus.NotLoaded -> copy.whisperMissing
+        is SpeechModelStatus.Loading -> status.message
+        is SpeechModelStatus.Ready -> "${copy.ready}: ${status.modelName}"
+        is SpeechModelStatus.Error -> status.message
     }
