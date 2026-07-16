@@ -643,3 +643,54 @@ planner, kernel, and tool tests must remain container-free.
 - `:app:sharedUI:allTests` passed.
 - aggregate Detekt plus explicit core and shared-logic metadata Detekt passed.
 - Android `assembleDebug` and `lintDebug` passed.
+
+---
+
+## 2026-07-16 — Tag-driven GitHub release pipeline
+
+### Decision
+
+Keep `main` as the only long-lived development branch. Release selection is a
+manual product decision made by merging a generated Release Please pull
+request; release branches are unnecessary until multiple supported production
+lines actually exist.
+
+Use Conventional Commit squash-merge titles as version metadata. `fix` bumps
+the patch version, `feat` bumps the minor version, and a breaking-change marker
+bumps the major version. Documentation, test, CI, and chore commits do not
+create a release by themselves.
+
+### Completed
+
+- Added Release Please configuration bootstrapped from version `0.1.0`.
+- Added `version.txt` as the shared release-version source and derived Android
+  `versionName` and monotonic `versionCode` from it.
+- Added CI validation for Conventional Commit pull request titles.
+- Added a manual-gated GitHub Release workflow that creates a draft release,
+  checks out the exact tagged commit, reruns non-device quality gates, restores
+  an ephemeral Android keystore, builds and verifies a signed release APK,
+  generates a SHA-256 checksum, adds public-repository provenance, uploads the
+  assets, and only then publishes the release.
+- Added repository keystore exclusions and documented the one-time signing and
+  Release Please token setup.
+
+### Remaining external setup
+
+Create and safely back up the Android release keystore, then configure the four
+Android signing secrets. Add the recommended `RELEASE_PLEASE_TOKEN` so generated
+release pull requests trigger normal branch-protection checks.
+
+### Verification
+
+- Release Please configuration passed its published JSON Schema.
+- `ci.yml`, `release.yml`, and `mkdocs.yml` passed YAML parsing; both GitHub
+  workflows passed `actionlint`.
+- Android debug and unsigned local release builds passed with
+  `versionName=0.1.0` and derived `versionCode=1000`; release lint passed.
+- Partial signing configuration failed at Gradle configuration time with the
+  intended missing-property diagnostic.
+- The complete release gate passed with a disposable keystore:
+  Detekt, core tests, shared-logic tests, shared-UI tests, release lint, and
+  `assembleRelease`.
+- `apksigner` verified the generated release APK with APK Signature Scheme v2.
+- `mkdocs build --strict` passed.

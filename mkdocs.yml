@@ -11,6 +11,8 @@ nav:
       - Prompt-guided JSON: decisions/0003-prompt-guided-json.md
       - Native model lifecycles: decisions/0004-separate-native-model-lifecycles.md
       - Offline first, sync later: decisions/0005-offline-first-sync-later.md
+      - Deterministic inspection planning: decisions/0006-deterministic-inspection-planning.md
   - Development models: development-model.md
   - Testing: testing.md
+  - Releasing: releasing.md
   - Journal: journal.md
