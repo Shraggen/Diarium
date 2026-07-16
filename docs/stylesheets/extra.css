@@ -1,0 +1,137 @@
+:root {
+  --diarium-purple: #6750a4;
+  --diarium-purple-dark: #4f378b;
+  --diarium-honey: #ffb300;
+}
+
+[data-md-color-scheme="default"] {
+  --md-primary-fg-color: var(--diarium-purple);
+  --md-primary-fg-color--dark: var(--diarium-purple-dark);
+  --md-accent-fg-color: #9a6700;
+}
+
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--diarium-purple-dark);
+  --md-accent-fg-color: var(--diarium-honey);
+}
+
+.diarium-hero {
+  margin: -1rem -0.6rem 2rem;
+  padding: clamp(2rem, 7vw, 5rem) clamp(1.2rem, 5vw, 4rem);
+  overflow: hidden;
+  color: white;
+  border-radius: 0 0 1.2rem 1.2rem;
+  background:
+    radial-gradient(circle at 85% 18%, rgb(255 179 0 / 35%), transparent 27rem),
+    linear-gradient(135deg, #31204f, var(--diarium-purple) 55%, #8065bd);
+  box-shadow: 0 1rem 2.5rem rgb(49 32 79 / 22%);
+}
+
+.diarium-hero h1 {
+  margin: 0;
+  color: white;
+  font-size: clamp(2.8rem, 8vw, 5.2rem);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.diarium-hero h2 {
+  max-width: 38rem;
+  margin: 0.3rem 0 1rem;
+  color: #fff7db;
+  font-size: clamp(1.15rem, 3vw, 1.7rem);
+  font-weight: 500;
+}
+
+.diarium-hero p {
+  max-width: 44rem;
+  font-size: 1.05rem;
+}
+
+.diarium-hero .md-button {
+  margin-top: 0.5rem;
+  margin-right: 0.45rem;
+  color: white;
+  border-color: rgb(255 255 255 / 70%);
+}
+
+.diarium-hero .md-button--primary {
+  color: #2c1b45;
+  background-color: #ffd66b;
+  border-color: #ffd66b;
+}
+
+.diarium-cards > ul > li {
+  border: 1px solid rgb(103 80 164 / 22%);
+  box-shadow: 0 0.35rem 1.1rem rgb(49 32 79 / 8%);
+}
+
+.diarium-cards .lg {
+  color: var(--diarium-purple);
+}
+
+.diarium-flow {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 1rem 0 2rem;
+}
+
+.diarium-flow > ol {
+  display: contents;
+}
+
+.diarium-flow > ol > li {
+  position: relative;
+  padding: 1rem;
+  list-style-position: inside;
+  border: 1px solid rgb(103 80 164 / 22%);
+  border-radius: 0.75rem;
+  background: rgb(103 80 164 / 5%);
+}
+
+.diarium-flow > ol > li::marker {
+  color: var(--diarium-purple);
+  font-weight: 800;
+}
+
+.diarium-flow > ol > li:not(:last-child)::after {
+  position: absolute;
+  top: 50%;
+  right: -0.7rem;
+  z-index: 1;
+  color: var(--diarium-purple);
+  content: "›";
+  font-size: 1.6rem;
+  transform: translateY(-55%);
+}
+
+.diarium-flow p {
+  margin-bottom: 0;
+  font-size: 0.82rem;
+}
+
+@media screen and (min-width: 76.25em) {
+  .diarium-hero {
+    margin-top: 0;
+  }
+}
+
+@media screen and (max-width: 44.984375em) {
+  .diarium-hero {
+    margin-right: -0.8rem;
+    margin-left: -0.8rem;
+    border-radius: 0;
+  }
+
+  .diarium-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .diarium-flow > ol > li:not(:last-child)::after {
+    top: auto;
+    right: 50%;
+    bottom: -1.15rem;
+    transform: rotate(90deg);
+  }
+}

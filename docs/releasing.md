@@ -94,10 +94,25 @@ Add a fine-grained personal access token as `RELEASE_PLEASE_TOKEN` with access
 to this repository and read/write permissions for contents, pull requests, and
 issues. A pull request created with that token triggers the normal CI workflow.
 
-The workflow falls back to `GITHUB_TOKEN`, but GitHub suppresses recursive
-workflow runs for pull requests created with that token. The dedicated token is
-therefore recommended when branch protection requires CI on the generated
-release pull request.
+The dedicated token is required. This avoids two limitations of the default
+`GITHUB_TOKEN`: repositories may prohibit it from creating pull requests, and
+events created with it do not trigger another workflow run.
+
+If a run has already failed with:
+
+```text
+GitHub Actions is not permitted to create or approve pull requests
+```
+
+add `RELEASE_PLEASE_TOKEN` and rerun the failed workflow. Release Please will
+reuse the branch it already created and open or update the release pull request;
+the branch does not need to be deleted manually.
+
+If you intentionally want to use `GITHUB_TOKEN` instead, change the workflow
+token and enable:
+
+`Settings → Actions → General → Workflow permissions → Allow GitHub Actions to
+create and approve pull requests`.
 
 Keep the repository configured for squash merging so the validated pull request
 title becomes the single Conventional Commit on `main`.

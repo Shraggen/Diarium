@@ -1,18 +1,69 @@
-site_name: Diarium documentation
+site_name: Diarium
+site_description: Offline-first multilingual beekeeping journal
+site_url: https://shraggen.github.io/Diarium/
+repo_url: https://github.com/Shraggen/Diarium
+repo_name: Shraggen/Diarium
+
 theme:
   name: material
+  language: en
+  features:
+    - navigation.instant
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  icon:
+    logo: material/beehive-outline
+    repo: fontawesome/brands/github
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - tables
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
 
 nav:
-  - Architecture: architecture.md
-  - Project structure: project-structure.md
-  - Decisions:
-      - Microkernel tools: decisions/0001-microkernel-tool-contracts.md
-      - Plan, confirm, execute: decisions/0002-plan-confirm-execute.md
-      - Prompt-guided JSON: decisions/0003-prompt-guided-json.md
-      - Native model lifecycles: decisions/0004-separate-native-model-lifecycles.md
-      - Offline first, sync later: decisions/0005-offline-first-sync-later.md
-      - Deterministic inspection planning: decisions/0006-deterministic-inspection-planning.md
-  - Development models: development-model.md
-  - Testing: testing.md
-  - Releasing: releasing.md
-  - Journal: journal.md
+  - Home: index.md
+  - Architecture:
+      - Overview: architecture.md
+      - Project structure: project-structure.md
+      - Decisions:
+          - Microkernel tools: decisions/0001-microkernel-tool-contracts.md
+          - Plan, confirm, execute: decisions/0002-plan-confirm-execute.md
+          - Prompt-guided JSON: decisions/0003-prompt-guided-json.md
+          - Native model lifecycles: decisions/0004-separate-native-model-lifecycles.md
+          - Offline first, sync later: decisions/0005-offline-first-sync-later.md
+          - Deterministic inspection planning: decisions/0006-deterministic-inspection-planning.md
+  - Development:
+      - Development model: development-model.md
+      - Testing strategy: testing.md
+      - Release process: releasing.md
+      - Project journal: journal.md

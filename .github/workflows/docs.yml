@@ -34,12 +34,10 @@ jobs:
           python-version: '3.x'
 
       - name: Install MkDocs and Material Theme
-        run: |
-          pip install mkdocs-material
+        run: pip install mkdocs-material
 
       - name: Build Documentation
-        run: |
-          mkdocs build
+        run: mkdocs build --strict
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

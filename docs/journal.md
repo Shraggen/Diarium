@@ -694,3 +694,36 @@ release pull requests trigger normal branch-protection checks.
   `assembleRelease`.
 - `apksigner` verified the generated release APK with APK Signature Scheme v2.
 - `mkdocs build --strict` passed.
+
+---
+
+## 2026-07-16 — Release permission and documentation-site repair
+
+### Finding
+
+The first Release Please run successfully created its release commit and branch
+but GitHub rejected pull-request creation because the workflow fell back to a
+restricted `GITHUB_TOKEN`.
+
+The deployed documentation root was a 404 page. The project also lacked a
+configured GitHub Project Pages base URL, so generated assets could resolve
+against `/assets` instead of `/Diarium/assets`.
+
+### Completed
+
+- Made `RELEASE_PLEASE_TOKEN` explicit and added an early diagnostic when the
+  secret is missing. The existing Release Please branch can be reused on rerun.
+- Added the canonical GitHub Pages `site_url`, repository metadata, and strict
+  documentation builds.
+- Added a real landing page with a concise product explanation, architecture
+  entry points, workflow overview, and responsive documentation cards.
+- Reorganized navigation into Home, Architecture, and Development sections.
+- Added light/dark palettes, repository links, mobile styling, and project
+  branding while retaining Material for MkDocs.
+
+### Verification
+
+- MkDocs strict build passed.
+- The generated root contains the landing-page content, no 404 marker, a
+  canonical `/Diarium/` URL, and relative project-safe asset links.
+- All GitHub workflows passed `actionlint`.
