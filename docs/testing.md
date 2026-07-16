@@ -6,14 +6,51 @@ are still exercised on a real Android runtime.
 
 | Layer | Scope | Current coverage |
 | --- | --- | --- |
-| Unit | Pure Kotlin contracts and transformations | JSON Schema, tool parsing, strict prompts, German/Serbian locale mapping, Unicode transcript parsing, PCM16 WAV encoding |
-| Integration | Multiple production components with controlled adapters | Serbian Cyrillic transcript → kernel plan → explicit execution → inspection repository |
+| Unit | Pure Kotlin contracts and transformations | JSON Schema, deterministic multilingual planning, guardrails, model-adapter parsing, Unicode transcript parsing, PCM16 WAV encoding |
+| Integration | Multiple production components with controlled adapters | Serbian Cyrillic transcript → deterministic kernel plan → explicit execution → inspection repository |
 | Android instrumentation | Android framework and native dependencies | Room write/read ordering, Activity launch, bundled Silero ONNX inference, optional provisioned Whisper initialization through Llamatik |
-| Manual acceptance | Physical microphone, model quality, latency, thermal behavior | English, German, Serbian Latin, and Serbian Cyrillic voice commands on a representative phone |
+| Manual acceptance | Physical microphone, transcription quality, latency, thermal behavior | English, German, Serbian Latin, and Serbian Cyrillic voice commands on a representative phone |
 
 The integration test deliberately checks that planning leaves the repository
 unchanged. Persistence occurs only when the planned call is executed, matching
 the confirmation boundary in the app.
+
+## Executable specifications and contracts
+
+The testing vocabulary is intentionally split by purpose:
+
+- `docs/features/*.feature` contains short Gherkin product specifications. They
+  describe user-visible behavior and are the acceptance-language source for
+  product discussion.
+- `RecordInspectionFeatureTest` is the executable common-Kotlin counterpart for
+  the current Gherkin scenarios. It crosses planner, kernel, tool, and an
+  in-memory repository without requiring Android.
+- kernel invariant tests enforce microkernel safety properties such as
+  planning being side-effect free, blank input not invoking a planner, unknown
+  tools not executing, and duplicate tool names being rejected.
+- reusable planner and mutating-tool conformance helpers define contracts that
+  future implementations can run without copying every assertion.
+- Kotest property checks generate hundreds of identifier, language, casing,
+  punctuation, whitespace, ambiguity, and unrelated-text combinations. Kotest
+  is used only as a KMP property generator; the existing `kotlin-test` runner
+  remains in place.
+
+The `.feature` files are not executed through Cucumber-JVM. Their common-Kotlin
+counterparts are the executable gate, which keeps the specification portable
+across Android and iOS without introducing a JVM-only runner. A behavior change
+must update both the readable scenario and its executable counterpart in the
+same review.
+
+Gherkin examples stay deliberately small and representative. A field failure
+becomes one named regression example, while property tests cover families of
+equivalent inputs and conformance suites cover every implementation of a
+contract. This avoids turning every possible transcript into a hand-written
+acceptance scenario.
+
+If a property check fails, preserve the reported seed while debugging and add
+the smallest meaningful counterexample to the fixed evaluation corpus when it
+represents a real domain rule. Randomly generated cases do not replace the
+owned multilingual corpus or physical microphone acceptance.
 
 ## CI gates
 
@@ -68,7 +105,7 @@ and confirm all of these on a physical device:
 - Serbian Latin: `Pregledao sam košnicu 4 i video maticu.`
 - Serbian Cyrillic: `Прегледао сам кошницу 4 и видео матицу.`
 
-For each phrase, verify the transcript, proposed `hive_id`, and
+For each phrase, verify the transcript, planned `hive_id`, and
 `queen_seen` value before confirming. Then force-stop and relaunch the app and
 verify that Room restores the journal entry. Test cancellation once per
 language and confirm that it writes nothing.
@@ -77,3 +114,35 @@ Native ASR quality is data- and device-dependent, especially for lower-resource
 languages. German and Serbian golden-audio fixtures should be added once the
 team owns representative, consented recordings that can legally live in the
 test repository.
+
+## Quality and performance measurement
+
+Use the same versioned corpus for every parser or model comparison. Record at
+least these correctness metrics:
+
+- exact match for `hive_id` and `queen_seen` separately;
+- fully correct end-to-end command rate;
+- abstention rate for missing, contradictory, hedged, or unsupported input;
+- false-accept rate, where confirmation is enabled for an incorrect value.
+
+False accepts are the safety-critical metric and have a release target of zero
+on the owned corpus. Abstention is not automatically a defect: for uncertain
+speech it is safer than an invented journal entry. The four 2026-07-14 field
+transcripts are permanent deterministic-planner regressions.
+
+Once consented golden audio exists, measure Whisper independently with word or
+character error rate and then measure end-to-end field accuracy. This separates
+speech-recognition failures from deterministic-planner coverage failures.
+
+On a representative physical phone, collect p50 and p95 for transcription,
+planning, and confirmed persistence. Record peak process RSS, Java and native
+heap, battery change, and thermal throttling over a fixed repeated run. Android
+Studio Profiler and Perfetto are sufficient for initial CPU, memory, and system
+traces; a continuous profiling backend is not required for this local-only
+stage.
+
+The next observability increment should be a small, privacy-preserving local
+diagnostic event stream with stage duration, outcome category, app version,
+device/model profile, and no raw transcript or audio by default. A user-driven
+JSON export is more useful than OpenTelemetry until a synchronization service
+and collector actually exist.

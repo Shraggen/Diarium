@@ -20,11 +20,12 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.shraggen.diarium.beekeeping.HiveIdentifierConsistency
 import com.shraggen.diarium.beekeeping.InspectionRecord
+import com.shraggen.diarium.beekeeping.QueenObservationConsistency
 import com.shraggen.diarium.speech.SpeechLanguage
 
 data class DiariumUiState(
-    val modelStatus: ModelStatus = ModelStatus.NotLoaded,
     val userInput: String = "",
     val output: String = "",
     val isProcessing: Boolean = false,
@@ -36,27 +37,6 @@ data class DiariumUiState(
     val selectedLanguage: SpeechLanguage = SpeechLanguage.ENGLISH,
     val detectedSpeechLanguage: String? = null,
 )
-
-data class PendingToolCall(
-    val toolName: String,
-    val arguments: String,
-)
-
-sealed interface ModelStatus {
-    data object NotLoaded : ModelStatus
-
-    data class Loading(
-        val message: String,
-    ) : ModelStatus
-
-    data class Ready(
-        val modelName: String,
-    ) : ModelStatus
-
-    data class Error(
-        val message: String,
-    ) : ModelStatus
-}
 
 sealed interface SpeechModelStatus {
     data object NotLoaded : SpeechModelStatus
@@ -82,7 +62,6 @@ sealed interface VoiceStatus {
 fun App(
     state: DiariumUiState = DiariumUiState(),
     onUserInputChanged: (String) -> Unit = {},
-    onSelectModel: () -> Unit = {},
     onSelectWhisperModel: () -> Unit = {},
     onLanguageChanged: (SpeechLanguage) -> Unit = {},
     onVoiceInput: () -> Unit = {},
@@ -90,8 +69,6 @@ fun App(
     onConfirmToolCall: () -> Unit = {},
     onCancelToolCall: () -> Unit = {},
 ) {
-    val modelReady = state.modelStatus is ModelStatus.Ready
-    val modelLoading = state.modelStatus is ModelStatus.Loading
     val speechModelReady = state.speechModelStatus is SpeechModelStatus.Ready
     val speechModelLoading = state.speechModelStatus is SpeechModelStatus.Loading
     val recording = state.voiceStatus is VoiceStatus.Recording
@@ -112,21 +89,6 @@ fun App(
                 text = copy.title,
                 style = MaterialTheme.typography.headlineSmall,
             )
-
-            Text(
-                text = modelStatusText(state.modelStatus, copy),
-                color = when (state.modelStatus) {
-                    is ModelStatus.Error -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onBackground
-                },
-            )
-
-            Button(
-                onClick = onSelectModel,
-                enabled = !modelLoading && !state.isProcessing && !recording && !transcribing,
-            ) {
-                Text(if (modelReady) copy.changeLlm else copy.selectLlm)
-            }
 
             Text(
                 text = speechModelStatusText(state.speechModelStatus, copy),
@@ -154,7 +116,7 @@ fun App(
                 value = state.userInput,
                 onValueChange = onUserInputChanged,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = modelReady && !state.isProcessing && !recording && !transcribing,
+                enabled = !state.isProcessing && !recording && !transcribing,
                 label = { Text(copy.command) },
                 placeholder = {
                     Text(copy.commandPlaceholder)
@@ -169,8 +131,7 @@ fun App(
                 Button(
                     onClick = onProcess,
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = modelReady &&
-                        state.userInput.isNotBlank() &&
+                    enabled = state.userInput.isNotBlank() &&
                         !state.isProcessing &&
                         !recording &&
                         !transcribing,
@@ -184,14 +145,16 @@ fun App(
                     enabled = if (recording) {
                         true
                     } else {
-                        modelReady && speechModelReady && !state.isProcessing && !transcribing
+                        speechModelReady &&
+                            !state.isProcessing &&
+                            !transcribing
                     },
                 ) {
                     Text(if (recording) copy.stopRecording else copy.recordVoice)
                 }
             }
 
-            if (modelLoading || speechModelLoading || state.isProcessing || transcribing) {
+            if (speechModelLoading || state.isProcessing || transcribing) {
                 CircularProgressIndicator()
             }
 
@@ -254,13 +217,21 @@ private fun PendingToolCallCard(
                 text = copy.confirmWrite,
                 style = MaterialTheme.typography.titleMedium,
             )
-            Text("${copy.tool}: ${call.toolName}")
-            Text(call.arguments)
+            Text("${copy.hive}: ${call.hiveId ?: copy.unknown}")
+            Text(
+                "${copy.queenSeen}: " + when (call.queenSeen) {
+                    true -> copy.yes
+                    false -> copy.no
+                    null -> copy.unknown
+                },
+            )
+            IdentifierConsistencyMessage(call.identifierConsistency, copy)
+            QueenConsistencyMessage(call.queenConsistency, copy)
             Text(copy.nothingSaved)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Button(
                     onClick = onConfirm,
-                    enabled = !isProcessing,
+                    enabled = call.confirmationAllowed && !isProcessing,
                 ) {
                     Text(copy.confirm)
                 }
@@ -273,6 +244,93 @@ private fun PendingToolCallCard(
             }
         }
     }
+}
+
+@Composable
+private fun IdentifierConsistencyMessage(
+    consistency: HiveIdentifierConsistency,
+    copy: AppCopy,
+) {
+    when (consistency) {
+        is HiveIdentifierConsistency.Verified -> Unit
+        is HiveIdentifierConsistency.Mismatch -> {
+            Text(
+                text = copy.identifierMismatch,
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = "${copy.spokenHive}: ${consistency.transcriptIdentifier}",
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = "${copy.proposedHive}: ${consistency.proposedIdentifier}",
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        is HiveIdentifierConsistency.CannotVerify -> {
+            Text(
+                text = copy.identifierCannotVerify,
+                color = MaterialTheme.colorScheme.error,
+            )
+            if (consistency.transcriptIdentifiers.isNotEmpty()) {
+                Text(
+                    text = "${copy.spokenHive}: " +
+                        consistency.transcriptIdentifiers.joinToString(),
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun QueenConsistencyMessage(
+    consistency: QueenObservationConsistency,
+    copy: AppCopy,
+) {
+    when (consistency) {
+        is QueenObservationConsistency.Verified -> Unit
+        is QueenObservationConsistency.Mismatch -> {
+            Text(
+                text = copy.queenMismatch,
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = "${copy.transcriptQueenSeen}: " +
+                    booleanDisplayValue(consistency.transcriptQueenSeen, copy),
+                color = MaterialTheme.colorScheme.error,
+            )
+            Text(
+                text = "${copy.proposedQueenSeen}: " +
+                    booleanDisplayValue(consistency.proposedQueenSeen, copy),
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
+        is QueenObservationConsistency.CannotVerify -> {
+            Text(
+                text = copy.queenCannotVerify,
+                color = MaterialTheme.colorScheme.error,
+            )
+            if (consistency.transcriptObservations.isNotEmpty()) {
+                Text(
+                    text = "${copy.transcriptQueenSeen}: " +
+                        consistency.transcriptObservations.joinToString { value ->
+                            booleanDisplayValue(value, copy)
+                        },
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
+}
+
+private fun booleanDisplayValue(
+    value: Boolean?,
+    copy: AppCopy,
+): String = when (value) {
+    true -> copy.yes
+    false -> copy.no
+    null -> copy.unknown
 }
 
 @Composable
@@ -353,14 +411,6 @@ private fun VoiceStatusText(status: VoiceStatus, copy: AppCopy) {
         )
     }
 }
-
-private fun modelStatusText(status: ModelStatus, copy: AppCopy): String =
-    when (status) {
-        ModelStatus.NotLoaded -> copy.llmMissing
-        is ModelStatus.Loading -> status.message
-        is ModelStatus.Ready -> "${copy.ready}: ${status.modelName}"
-        is ModelStatus.Error -> status.message
-    }
 
 private fun speechModelStatusText(
     status: SpeechModelStatus,

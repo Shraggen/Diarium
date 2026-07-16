@@ -7,3 +7,26 @@ complexity:
   LargeClass:
     active: true
     threshold: 150
+  CognitiveComplexMethod:
+    active: true
+    threshold: 15
+
+potential-bugs:
+  active: true
+  UnsafeCast:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**']
+
+performance:
+  active: true
+  SpreadOperator:
+    active: true
+
+style:
+  active: true
+  UnusedImports:
+    active: true
+  # Exclude test files from strict styling
+  MagicNumber:
+    active: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/iosTest/**']

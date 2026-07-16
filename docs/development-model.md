@@ -1,29 +1,9 @@
-# Android development model
+# Local model baselines
 
-Diarium's first real inference path uses an instruction-tuned GGUF model
-selected through Android's system file picker. The app copies the selected
-file into its private `files/models` directory, initializes Llamatik with the
-absolute path, and reloads the newest copied model on later launches.
-
-Voice input uses a second, independent Llamatik lifecycle. The app records
-16 kHz mono PCM16 audio, uses Silero VAD to detect speech and stop after a
-completed utterance, writes a temporary WAV, and asks Llamatik Whisper for a
-language-preserving segmented transcript. The transcript is passed through
-the same plan → confirm → Room persistence path as typed text.
-
-## Recommended baseline
-
-- Model: Qwen2.5-0.5B-Instruct
-- Quantization: Q4_K_M
-- File: `qwen2.5-0.5b-instruct-q4_k_m.gguf`
-- Approximate size: 491 MB
-- Source:
-  <https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF>
-- Direct file page:
-  <https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct-GGUF/blob/main/qwen2.5-0.5b-instruct-q4_k_m.gguf>
-
-This is a deliberately small baseline for proving constrained tool execution.
-It is not yet a final production-model decision.
+The active inspection workflow requires only a multilingual Whisper model.
+Typed commands are planned by common deterministic Kotlin, and voice commands
+use the same planner after transcription. The Android app no longer imports,
+restores, or loads a GGUF command model for `record_inspection`.
 
 ## Whisper baseline
 
@@ -44,52 +24,47 @@ whose ONNX model is bundled with the Android dependency. Keep that adapter
 behind the recorder boundary so it can be replaced if Llamatik later exposes
 native whisper.cpp VAD.
 
-Keep at least 1 GB of free device storage while importing the model because
-the source file and Diarium's private copy temporarily coexist.
-
 ## Device verification
 
-1. Download the GGUF file to the Android device, or copy it into the device's
-   Downloads directory.
+1. Download a multilingual Whisper `.bin` file to the Android device.
 2. Build and install `app/androidApp` on a physical Android device.
-3. Open Diarium and select **Select GGUF model**.
-4. Choose `qwen2.5-0.5b-instruct-q4_k_m.gguf` in the system picker.
-5. Select **Select Whisper model** and choose a multilingual `.bin` model.
-6. Wait until both statuses change to **Ready**.
-7. Select English, German, or Serbian, then use **Record voice** or enter text.
-8. Review the proposed `record_inspection` arguments and select **Confirm**.
+3. Open Diarium and select **Select Whisper model**.
+4. Wait until the Whisper status changes to **Ready**.
+5. Select English, German, or Serbian, then use **Record voice** or enter text.
+6. Review the deterministic `record_inspection` plan and select **Confirm**.
 
-The expected result is a successful `record_inspection` execution containing
-`hive_id`, `queen_seen`, and `recorded`. The inspection is stored in Room and
-must remain visible in the inspection journal after force-stopping and
-relaunching the app.
+The expected result is a successful execution containing `hive_id`,
+`queen_seen`, and `recorded`. The inspection is stored in Room and must remain
+visible after force-stopping and relaunching the app. Typed input must work even
+when no Whisper model is installed.
+
+## Experimental command-model baseline
+
+The provider adapter and prompt/parser regression tests remain available for a
+future open-ended `ToolCallPlanner`. The previously verified development model
+was Qwen2.5-0.5B-Instruct Q4_K_M in GGUF format. It is not part of the current
+inspection UI because repeated field tests showed unreliable canonical
+structured extraction and because loading it consumed resources without adding
+value to the bounded two-field command.
+
+Llamatik's schema-grammar generation path in versions 1.8.1 and 1.9.0 can abort
+the process due to a native double-accept failure. Any future model-backed
+planner must keep prompt-guided generation isolated, remain behind explicit
+confirmation and deterministic validation, and re-evaluate the native path only
+after an upstream version is verified on a physical device.
 
 ## Current limitations
 
-- Model acquisition is manual; there is no in-app downloader yet.
-- The model is copied without an import progress percentage.
-- Android is the only verified platform for this milestone.
+- Whisper acquisition is manual; there is no in-app downloader yet.
+- Import has no progress percentage.
+- Android is the only verified production runtime for this milestone.
 - Android microphone capture is implemented; the iOS speech capture adapter is
   still pending even though the shared iOS app remains part of CI.
 - Silero stops after 900 ms of sustained non-speech and recording has a
   30-second safety cap. These thresholds need field calibration in apiaries.
-- Whisper preserves the selected source language (`translate = false`). The
-  tool prompt explicitly covers English, German, Serbian Latin, and Serbian
-  Cyrillic, but final language quality remains model-dependent.
-- Every model-proposed journal write requires explicit confirmation. This is
-  a safety boundary for prompt-guided generation, not a substitute for
-  reliable intent routing.
-- Llamatik's schema-grammar generation path double-accepts sampled tokens and
-  can abort the process on the first JSON token. The behavior was reproduced
-  on both 1.8.1 and 1.9.0. Diarium defaults to `PROMPT_GUIDED`, supplying the
-  schema in a strict prompt and parsing the returned JSON in Kotlin. The
-  explicit `NATIVE_GRAMMAR` mode is retained only for testing a future fix;
-  do not treat the default path as token-level schema enforcement.
-- The crash workaround was verified on an SM-A546B with
-  `qwen2.5-0.5b-instruct-q4_0.gguf`: the sample inspection returned
-  `{"hive_id":"4","queen_seen":true,"recorded":true}` without a native
-  abort. Q4_K_M remains the recommended baseline; broader latency, memory,
-  and resource-shutdown measurements are still outstanding.
-- LLM-driven multi-tool routing is deferred. The 0.5B development model
-  misrouted a read request to the mutating record tool during device testing;
-  the journal therefore reads the repository directly for now.
+- Whisper preserves the selected source language (`translate = false`).
+- The deterministic planner intentionally supports a finite inspection grammar.
+  Unsupported, ambiguous, contradictory, or hedged fields must remain blocked
+  instead of being guessed.
+- LLM-driven multi-tool routing remains deferred. A future planner can use the
+  core `ToolCallPlanner` seam without changing the tool or repository contracts.

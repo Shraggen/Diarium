@@ -51,11 +51,13 @@ private fun ByteArray.writeAscii(offset: Int, value: String) {
     }
 }
 
+@Suppress("MagicNumber")
 private fun ByteArray.writeInt16LittleEndian(offset: Int, value: Int) {
     this[offset] = value.toByte()
     this[offset + 1] = (value ushr 8).toByte()
 }
 
+@Suppress("MagicNumber")
 private fun ByteArray.writeInt32LittleEndian(offset: Int, value: Int) {
     this[offset] = value.toByte()
     this[offset + 1] = (value ushr 8).toByte()

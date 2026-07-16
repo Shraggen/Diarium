@@ -5,11 +5,8 @@ import com.shraggen.diarium.speech.SpeechLanguage
 internal data class AppCopy(
     val title: String,
     val language: String,
-    val llmMissing: String,
     val whisperMissing: String,
     val ready: String,
-    val selectLlm: String,
-    val changeLlm: String,
     val selectWhisper: String,
     val changeWhisper: String,
     val command: String,
@@ -22,7 +19,6 @@ internal data class AppCopy(
     val detectedLanguage: String,
     val result: String,
     val confirmWrite: String,
-    val tool: String,
     val nothingSaved: String,
     val confirm: String,
     val cancel: String,
@@ -32,6 +28,17 @@ internal data class AppCopy(
     val queenSeen: String,
     val queenNotSeen: String,
     val record: String,
+    val yes: String,
+    val no: String,
+    val unknown: String,
+    val spokenHive: String,
+    val proposedHive: String,
+    val identifierMismatch: String,
+    val identifierCannotVerify: String,
+    val transcriptQueenSeen: String,
+    val proposedQueenSeen: String,
+    val queenMismatch: String,
+    val queenCannotVerify: String,
 )
 
 internal fun copyFor(language: SpeechLanguage): AppCopy =
@@ -44,11 +51,8 @@ internal fun copyFor(language: SpeechLanguage): AppCopy =
 private val ENGLISH_COPY = AppCopy(
     title = "Diarium local inspection journal",
     language = "Language",
-    llmMissing = "Select an instruction-tuned GGUF model to begin.",
     whisperMissing = "Select a multilingual Whisper .bin model for voice input.",
     ready = "Ready",
-    selectLlm = "Select GGUF model",
-    changeLlm = "Change GGUF model",
     selectWhisper = "Select Whisper model",
     changeWhisper = "Change Whisper model",
     command = "Command",
@@ -61,7 +65,6 @@ private val ENGLISH_COPY = AppCopy(
     detectedLanguage = "Whisper language",
     result = "Result",
     confirmWrite = "Confirm journal write",
-    tool = "Tool",
     nothingSaved = "Nothing is saved until you confirm.",
     confirm = "Confirm",
     cancel = "Cancel",
@@ -71,16 +74,28 @@ private val ENGLISH_COPY = AppCopy(
     queenSeen = "Queen seen",
     queenNotSeen = "Queen not seen",
     record = "Record",
+    yes = "Yes",
+    no = "No",
+    unknown = "Unknown",
+    spokenHive = "Hive in transcript",
+    proposedHive = "Hive in planned action",
+    identifierMismatch =
+        "The transcript and planned hive disagree. Confirmation is blocked.",
+    identifierCannotVerify =
+        "A single explicit hive identifier could not be verified. Confirmation is blocked.",
+    transcriptQueenSeen = "Queen seen in transcript",
+    proposedQueenSeen = "Queen seen in planned action",
+    queenMismatch =
+        "The transcript and planned queen observation disagree. Confirmation is blocked.",
+    queenCannotVerify =
+        "An explicit queen observation could not be verified. Confirmation is blocked.",
 )
 
 private val GERMAN_COPY = AppCopy(
     title = "Lokales Diarium-Inspektionsjournal",
     language = "Sprache",
-    llmMissing = "Wähle ein instruktionsoptimiertes GGUF-Modell aus.",
     whisperMissing = "Wähle ein mehrsprachiges Whisper-.bin-Modell für Spracheingaben aus.",
     ready = "Bereit",
-    selectLlm = "GGUF-Modell auswählen",
-    changeLlm = "GGUF-Modell wechseln",
     selectWhisper = "Whisper-Modell auswählen",
     changeWhisper = "Whisper-Modell wechseln",
     command = "Befehl",
@@ -93,7 +108,6 @@ private val GERMAN_COPY = AppCopy(
     detectedLanguage = "Whisper-Sprache",
     result = "Ergebnis",
     confirmWrite = "Journaleintrag bestätigen",
-    tool = "Werkzeug",
     nothingSaved = "Bis zur Bestätigung wird nichts gespeichert.",
     confirm = "Bestätigen",
     cancel = "Abbrechen",
@@ -103,16 +117,32 @@ private val GERMAN_COPY = AppCopy(
     queenSeen = "Königin gesehen",
     queenNotSeen = "Königin nicht gesehen",
     record = "Eintrag",
+    yes = "Ja",
+    no = "Nein",
+    unknown = "Unbekannt",
+    spokenHive = "Bienenstock im Transkript",
+    proposedHive = "Bienenstock in der geplanten Aktion",
+    identifierMismatch =
+        "Transkript und geplanter Bienenstock stimmen nicht überein. " +
+            "Die Bestätigung ist gesperrt.",
+    identifierCannotVerify =
+        "Es konnte keine einzelne eindeutige Bienenstocknummer geprüft werden. " +
+            "Die Bestätigung ist gesperrt.",
+    transcriptQueenSeen = "Königin laut Transkript gesehen",
+    proposedQueenSeen = "Königin-Sichtung in der geplanten Aktion",
+    queenMismatch =
+        "Transkript und geplante Königin-Sichtung stimmen nicht überein. " +
+            "Die Bestätigung ist gesperrt.",
+    queenCannotVerify =
+        "Eine eindeutige Aussage zur Königin-Sichtung konnte nicht geprüft werden. " +
+            "Die Bestätigung ist gesperrt.",
 )
 
 private val SERBIAN_COPY = AppCopy(
     title = "Локални дневник прегледа",
     language = "Језик",
-    llmMissing = "Изаберите инструкцијски подешен GGUF модел.",
     whisperMissing = "Изаберите вишејезични Whisper .bin модел за гласовни унос.",
     ready = "Спремно",
-    selectLlm = "Изабери GGUF модел",
-    changeLlm = "Промени GGUF модел",
     selectWhisper = "Изабери Whisper модел",
     changeWhisper = "Промени Whisper модел",
     command = "Наредба",
@@ -125,7 +155,6 @@ private val SERBIAN_COPY = AppCopy(
     detectedLanguage = "Whisper језик",
     result = "Резултат",
     confirmWrite = "Потврди упис у дневник",
-    tool = "Алат",
     nothingSaved = "Ништа се не чува док не потврдите.",
     confirm = "Потврди",
     cancel = "Откажи",
@@ -135,4 +164,20 @@ private val SERBIAN_COPY = AppCopy(
     queenSeen = "Матица виђена",
     queenNotSeen = "Матица није виђена",
     record = "Запис",
+    yes = "Да",
+    no = "Не",
+    unknown = "Непознато",
+    spokenHive = "Кошница у транскрипту",
+    proposedHive = "Кошница у планираној радњи",
+    identifierMismatch =
+        "Транскрипт и планирана кошница се не подударају. Потврда је блокирана.",
+    identifierCannotVerify =
+        "Није могуће проверити једну јасно наведену кошницу. Потврда је блокирана.",
+    transcriptQueenSeen = "Матица виђена у транскрипту",
+    proposedQueenSeen = "Матица виђена у планираној радњи",
+    queenMismatch =
+        "Транскрипт и планирани податак о матици се не подударају. " +
+            "Потврда је блокирана.",
+    queenCannotVerify =
+        "Није могуће проверити јасну тврдњу о виђеној матици. Потврда је блокирана.",
 )

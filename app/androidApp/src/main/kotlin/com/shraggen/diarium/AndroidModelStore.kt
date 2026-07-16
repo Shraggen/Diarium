@@ -125,11 +125,6 @@ internal enum class StoredModelType(
     val extension: String,
     val fallbackName: String,
 ) {
-    LLM(
-        directoryName = "models",
-        extension = "gguf",
-        fallbackName = "development-model.gguf",
-    ),
     WHISPER(
         directoryName = "whisper-models",
         extension = "bin",

@@ -26,7 +26,9 @@ object LlamatikToolMapper {
             Select exactly one available tool for the user's request.
             Return only the JSON object required by the supplied schema.
             The user may write in English, German, Serbian Latin, or Serbian Cyrillic.
-            Understand the request in its original language and preserve identifiers exactly.
+            Understand the request in its original language and preserve identifier meaning exactly.
+            Follow every parameter description in the schema.
+            Return argument values only; never prefix an identifier with a translated field label.
             Never invent a hive identifier or an observation that the user did not provide.
 
             Language examples for the same intent:

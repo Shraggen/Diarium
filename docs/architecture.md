@@ -26,10 +26,10 @@ speech and local-inference infrastructure.
 
 - Android microphone capture with automatic end-of-speech detection.
 - Local multilingual transcription in English, German, and Serbian.
-- Local conversion of natural language into a registered tool call.
+- Deterministic local conversion of inspection language into a registered tool call.
 - Explicit confirmation before a mutating tool executes.
 - Offline persistence and display of recent hive inspections.
-- Private import and restoration of local Whisper and GGUF models.
+- Private import and restoration of a local Whisper model.
 
 Hotword detection, TTS, multi-turn conversation, production model downloads,
 additional beekeeping tools, and multi-worker synchronization are outside the
@@ -39,8 +39,8 @@ current milestone.
 
 | Priority | Goal | Meaning for Diarium |
 | --- | --- | --- |
-| 1 | Safety | Probabilistic output never mutates state without an explicit confirmation. |
-| 2 | Offline availability | Capture, transcription, inference, execution, and persistence work without a network. |
+| 1 | Safety | Uncertain interpretation abstains, and no proposal mutates state without explicit confirmation. |
+| 2 | Offline availability | Capture, transcription, planning, execution, and persistence work without a network. |
 | 3 | Multilingual correctness | English, German, Serbian Latin, and Serbian Cyrillic preserve identifiers and meaning. |
 | 4 | Portability | Domain contracts and shared UI/logic remain usable from Kotlin Multiplatform targets. |
 | 5 | Extensibility | A new domain operation is introduced as a typed tool, not as UI-specific parsing. |
@@ -59,13 +59,13 @@ current milestone.
 
 | Constraint | Consequence |
 | --- | --- |
-| Core operations are local-first | Models and Room data live in application-private storage. |
-| Android is the first complete runtime | Android owns audio, Silero VAD, native model lifecycle, and Room adapters. |
+| Core operations are local-first | The Whisper model and Room data live in application-private storage. |
+| Android is the first complete runtime | Android owns audio, Silero VAD, the Whisper lifecycle, and Room adapters. |
 | Kotlin Multiplatform is retained | Shared modules use KMP source sets such as `commonMain` and platform implementations. |
 | Llamatik 1.9 native grammar generation can abort the process | Prompt-guided JSON is the safe default until a verified upstream fix exists. |
-| Local models are probabilistic | Tool arguments are proposals; deterministic Kotlin validates and executes them. |
+| Speech recognition is probabilistic | The deterministic planner abstains when required fields are missing or ambiguous. |
 | German and Serbian are release requirements | Multilingual Whisper models are mandatory; `.en`-only models are unsuitable. |
-| Model files are too large for the repository | Development models are imported at runtime and CI uses fakes or optional provisioned models. |
+| Speech-model files are too large for the repository | Whisper models are imported at runtime and CI uses optional provisioned models. |
 
 The package and source-set directory conventions are explained in
 [Project structure](project-structure.md).
@@ -94,26 +94,28 @@ not a current dependency.
 | Microphone input | Android `AudioRecord` | 16 kHz mono PCM16 frames |
 | End-of-speech | Silero via `android-vad` | speech/non-speech decisions over 512-sample frames |
 | Speech recognition | Llamatik Whisper bridge | temporary WAV in, segmented JSON/transcript out |
-| Command inference | Llamatik llama.cpp bridge | prompt plus schemas in, JSON tool envelope out |
+| Inspection planning | Common Kotlin `RecordInspectionPlanner` | transcript in, canonical `ToolCall` out |
 | Persistent storage | Room/SQLite | inspection entities and ordered queries |
-| Model import | Android document picker | `.gguf` LLM and `.bin` Whisper files |
+| Model import | Android document picker | `.bin` Whisper files |
 
 All runtime data stays on the device in the current architecture.
 
 ## 4. Solution strategy
 
-Diarium separates probabilistic interpretation from deterministic effects:
+Diarium separates probabilistic transcription, deterministic planning, and
+deterministic effects:
 
 1. Platform adapters acquire speech and produce an editable transcript.
-2. The domain-neutral kernel asks the local model for one registered tool call.
-3. Kotlin parses the response into a typed `ToolCall`.
+2. A domain planner extracts the bounded inspection fields conservatively.
+3. The planner produces a canonical typed `ToolCall` or omits uncertain fields.
 4. The UI presents the proposed tool and arguments.
 5. Only explicit confirmation invokes the registered Kotlin tool.
 6. The tool validates its arguments and writes through a repository contract.
 
 The design uses a small microkernel, KMP shared contracts, platform adapters,
-and local persistence. Native model lifecycles are separate so replacing the
-speech model cannot accidentally invalidate the command model and vice versa.
+and local persistence. `ToolCallPlanner` keeps planning replaceable: bounded
+inspection fields use deterministic Kotlin, while a future open-ended tool may
+use a local model or remote provider behind the same contract.
 
 ## 5. Building block view
 
@@ -136,7 +138,6 @@ flowchart TD
 
     Silero["Silero VAD"]
     Whisper["Local Whisper model"]
-    LLM["Local GGUF model"]
 
     UI --> SharedUI
     UI --> Voice
@@ -147,13 +148,12 @@ flowchart TD
     AppRuntime --> Domain
     AppRuntime --> Room
     Domain --> Core
-    Domain --> LLM
 ```
 
 | Building block | Responsibility | Must not own |
 | --- | --- | --- |
-| `core` | Tool contracts, JSON Schema, registry/executor, prompt mapping, response parsing, plan/execute kernel. | Android, audio, Room, or beekeeping persistence. |
-| `sharedLogic` | Domain tools and repositories, controller composition, speech value types and portable transforms. | Android lifecycle or Compose widgets. |
+| `core` | Tool contracts, planner contract, JSON Schema, registry/executor, optional model mapping, plan/execute kernel. | Android, audio, Room, or beekeeping persistence. |
+| `sharedLogic` | Deterministic domain planners and tools, repositories, controller composition, speech value types, and portable transforms. | Android lifecycle or Compose widgets. |
 | `sharedUI` | Portable Compose screen and localized display copy. | Native audio/model implementations or database access. |
 | `androidApp` | Permissions, document pickers, coordinators, native model/audio lifecycle, Room adapter. | New generic tool/schema behavior that belongs in shared code. |
 | `iosApp` | iOS host and embedded KMP framework build. | Android implementations; full voice parity is not implemented yet. |
@@ -164,11 +164,10 @@ flowchart TD
 flowchart LR
     Coordinator["ToolCallCoordinator"] -->|"plan(text)"| Controller["DiariumController"]
     Controller --> Kernel["DiariumKernel"]
-    Kernel --> Mapper["LlamatikToolMapper"]
-    Mapper --> Generator["StructuredJsonGenerator"]
-    Generator --> Model["Local LLM"]
-    Model --> Parser["LlamatikToolCallParser"]
-    Parser -->|"ToolCall proposal"| Coordinator
+    Kernel --> Planner["RecordInspectionPlanner"]
+    Planner --> Hive["HiveIdentifierExtractor"]
+    Planner --> Queen["QueenObservationExtractor"]
+    Planner -->|"canonical ToolCall proposal"| Coordinator
     Coordinator -->|"confirm"| Executor["ToolExecutor"]
     Executor --> Tool["RecordInspectionTool"]
     Tool --> Repository["InspectionRepository"]
@@ -177,7 +176,8 @@ flowchart LR
 
 Important interfaces:
 
-- `StructuredJsonGenerator` isolates the kernel from a particular inference engine.
+- `ToolCallPlanner` isolates the kernel from deterministic or probabilistic planning implementations.
+- `StructuredJsonGenerator` remains an optional adapter seam for future model-backed planners.
 - `Tool` combines a JSON Schema specification with deterministic execution.
 - `InspectionRepository` isolates domain behavior from Room.
 - `DiariumKernel.plan` has no intended state mutation; `execute` is the effect boundary.
@@ -200,7 +200,8 @@ was typed or spoken.
    unbounded recording.
 4. The WAV is transcribed locally without translation and then deleted.
 5. The editable transcript is passed to `DiariumKernel.plan`.
-6. The local LLM proposes a tool envelope; Kotlin parses it into a `ToolCall`.
+6. The deterministic inspection planner extracts one canonical hive identifier
+   and one explicit queen observation into a `ToolCall`; uncertain fields are omitted.
 7. The UI displays the tool and arguments. Room is unchanged.
 8. Cancel discards the proposal. Confirm calls `DiariumKernel.execute`.
 9. `RecordInspectionTool` validates the arguments and writes through Room.
@@ -208,15 +209,14 @@ was typed or spoken.
 
 ### Application startup
 
-1. Room and the recent journal load independently of model initialization.
-2. The newest privately stored LLM and Whisper models are discovered.
-3. Each native runtime initializes independently and publishes its own status.
-4. Text processing requires the LLM; recording additionally requires Whisper
-   and microphone permission.
+1. Room and the recent journal load immediately.
+2. The newest privately stored Whisper model is discovered and initialized.
+3. Typed inspection processing is immediately available.
+4. Recording additionally requires Whisper and microphone permission.
 
 ### Failure behavior
 
-- A recording, transcription, model, parsing, or execution failure is surfaced
+- A recording, transcription, planning, or execution failure is surfaced
   as UI state and must not create a record.
 - Changing transcript text invalidates any pending proposal.
 - Temporary audio is removed after transcription and stale capture files are
@@ -232,10 +232,10 @@ was typed or spoken.
 flowchart TB
     subgraph Device["Android device"]
         APK["Diarium APK"]
-        Private["App-private files\nGGUF + Whisper models"]
+        Private["App-private files\nWhisper model"]
         Cache["Temporary WAV cache"]
         DB["Room SQLite database"]
-        Native["llama.cpp / whisper.cpp / ONNX native runtime"]
+        Native["whisper.cpp / ONNX native runtime"]
         APK --> Private
         APK --> Cache
         APK --> DB
@@ -243,9 +243,9 @@ flowchart TB
     end
 ```
 
-Android API 24 is the minimum imposed by the selected VAD dependency. Models
-are user-provisioned and are not packaged in the APK. Removing app data removes
-the private models and Room database.
+Android API 24 is the minimum imposed by the selected VAD dependency. The
+Whisper model is user-provisioned and is not packaged in the APK. Removing app
+data removes the private model and Room database.
 
 ### Build and verification infrastructure
 
@@ -260,25 +260,26 @@ the private models and Room database.
 
 ### Safety boundary
 
-The model may propose an operation but cannot directly access Room. Planning
-and execution are separate APIs, and every mutating proposal requires explicit
-confirmation. Argument validation is still required inside each tool because a
-confirmation does not make malformed data valid.
+The planner cannot directly access Room. Planning and execution are separate
+APIs, and every mutating proposal requires explicit confirmation. Argument
+validation remains inside each tool because confirmation does not make malformed
+data valid. Transcript-versus-plan consistency checks provide defense in depth.
 
 ### Multilingual behavior
 
 The selected language provides a Whisper language code and vocabulary prompt.
 Whisper does not translate. Serbian prompts include Latin and Cyrillic forms.
-Tool prompts instruct the LLM to preserve source identifiers. Automated tests
-cover Unicode and the plan/confirm/persist boundary; real speech quality remains
+Language-specific deterministic extractors canonicalize hive number words and
+explicit queen observations. Automated tests cover Unicode, mixed scripts,
+uncertainty, and the plan/confirm/persist boundary; real speech quality remains
 a physical acceptance concern.
 
 ### Local model lifecycle
 
-LLM and Whisper models use separate stores and native owners. Import is atomic
-through a partial file, model files remain private, and shutdown releases native
-resources. Model selection currently means “newest imported compatible file”;
-profiles and comparative evaluation are planned.
+The active application imports and restores only Whisper. Import is atomic
+through a partial file, the model remains private, and shutdown releases native
+resources. Llamatik command-model adapters remain available for future
+open-ended planners but are not loaded by the inspection UI.
 
 ### Persistence
 
@@ -310,6 +311,7 @@ not disappear inside a large architecture page:
 3. [ADR 0003: Use prompt-guided JSON until native grammar is safe](decisions/0003-prompt-guided-json.md)
 4. [ADR 0004: Separate speech, VAD, and command-model lifecycles](decisions/0004-separate-native-model-lifecycles.md)
 5. [ADR 0005: Keep persistence offline-first and defer collaboration](decisions/0005-offline-first-sync-later.md)
+6. [ADR 0006: Use deterministic planning for bounded inspection fields](decisions/0006-deterministic-inspection-planning.md)
 
 New decisions should use the same Context / Decision / Consequences format and
 supersede old ADRs instead of rewriting their history.
@@ -318,38 +320,32 @@ supersede old ADRs instead of rewriting their history.
 
 | Scenario | Expected response |
 | --- | --- |
-| The LLM proposes a write | No repository mutation occurs until the user confirms. |
+| The planner proposes a write | No repository mutation occurs until the user confirms. |
 | The user edits or cancels a proposal | The pending call is invalidated and persistence remains unchanged. |
-| The device has no network | Existing imported models and the local journal remain usable. |
-| A German or Serbian command contains an explicit hive ID | The transcript and proposed argument preserve it; disagreement must be visible and is the next hardening target. |
-| Native model initialization fails | The failure is isolated to that model status and does not corrupt the journal. |
+| The device has no network | The imported Whisper model and local journal remain usable. |
+| A supported command contains one explicit hive ID and queen observation | The planner emits canonical exact values independent of an LLM. |
+| The command is ambiguous or contradictory | The uncertain field is omitted and confirmation remains blocked. |
+| Whisper initialization fails | Typed input and the local journal remain available. |
 | The app is force-stopped after a confirmed write | Room restores the record on relaunch. |
 | A new domain tool is added | Core routing does not require Android or UI changes beyond presenting the registered proposal. |
 | A pull request changes a boundary | Unit, integration, Android, architecture-fitness, and static checks catch regressions proportionately. |
 
 ## 11. Risks and technical debt
 
-### Immediate: transcript/tool identifier disagreement
+### Transcription and language coverage
 
-The 2026-07-14 multilingual field test succeeded end to end, but one Serbian
-screenshot contained the word `pet` (five) while the recorded result showed
-Hive 4. This must be reproduced and guarded independently of model upgrades.
-The next milestone is a multilingual identifier-consistency validator and an
-evaluation corpus for tool calls.
-
-### Probabilistic inference
-
-The development Whisper base model and 0.5B command model trade quality for
-device cost. Larger multilingual models may improve recognition and intent
-mapping, but do not replace deterministic validation. Accuracy, latency, RAM,
-thermal load, and battery usage need comparative measurements.
+Whisper can still damage a phrase before deterministic planning sees it, and a
+finite parser covers only intentionally supported command forms. Golden audio,
+abstention behavior, field exact-match rate, latency, RAM, thermal load, and
+battery usage need comparative measurements on representative devices.
 
 ### Prompt-guided structured output
 
-The current inference mode can emit malformed or fenced JSON because grammar
-constraints are not enforced natively. Parsing tests reduce the risk but cannot
-make a small language model deterministic. A verified upstream grammar fix or
-another constrained decoder may supersede ADR 0003.
+Prompt-guided model planning is no longer on the `record_inspection` runtime
+path. The adapter can still emit malformed or semantically wrong JSON if reused
+for a future open-ended tool. A verified upstream grammar fix or another
+constrained decoder is required before it can be treated as more than a
+probabilistic proposal source.
 
 ### Future collaboration and synchronization
 
@@ -375,7 +371,7 @@ and platform implementations rather than being inferred from KMP compilation.
 | KMP | Kotlin Multiplatform, which provides shared and platform-specific source sets. |
 | Kernel | Domain-neutral planning and tool-execution machinery in `core`. |
 | Tool | A JSON-Schema-described operation implemented by deterministic Kotlin code. |
-| Tool call | A model-proposed tool name plus arguments; it is not execution. |
+| Tool call | A planner-proposed tool name plus arguments; it is not execution. |
 | VAD | Voice activity detection; Silero determines speech versus silence during capture. |
 | GGUF | File format used for the local llama.cpp command model. |
 | Room | Android persistence library over SQLite. |

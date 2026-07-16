@@ -31,11 +31,6 @@ class DiariumViewModel(
         mutableUiState = mutableUiState,
         coroutineScope = viewModelScope,
     )
-    internal val llmModels = LlmModelCoordinator(
-        runtime = runtime,
-        mutableUiState = mutableUiState,
-        coroutineScope = viewModelScope,
-    )
     internal val voiceInput = VoiceInputCoordinator(
         runtime = speechRuntime,
         toolCallCoordinator = toolCalls,
@@ -45,13 +40,11 @@ class DiariumViewModel(
 
     init {
         refreshRecentInspections()
-        llmModels.restore()
         voiceInput.restoreModel()
     }
 
     override fun onCleared() {
         speechRuntime.release()
-        runtime.shutdown()
         super.onCleared()
     }
 

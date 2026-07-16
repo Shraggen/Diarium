@@ -18,12 +18,6 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel by viewModels<DiariumViewModel>()
 
-    private val modelPicker = registerForActivityResult(
-        ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        uri?.let(viewModel.llmModels::load)
-    }
-
     private val whisperModelPicker = registerForActivityResult(
         ActivityResultContracts.OpenDocument(),
     ) { uri ->
@@ -50,9 +44,6 @@ class MainActivity : ComponentActivity() {
             App(
                 state = state,
                 onUserInputChanged = viewModel.toolCalls::updateUserInput,
-                onSelectModel = {
-                    modelPicker.launch(arrayOf("*/*"))
-                },
                 onSelectWhisperModel = {
                     whisperModelPicker.launch(arrayOf("*/*"))
                 },
@@ -87,9 +78,6 @@ class MainActivity : ComponentActivity() {
 fun AppAndroidPreview() {
     App(
         state = DiariumUiState(
-            modelStatus = ModelStatus.Ready(
-                "qwen2.5-0.5b-instruct-q4_k_m.gguf",
-            ),
             userInput = "I inspected hive 4 and saw the queen.",
             output = "{\"hive_id\":\"4\",\"queen_seen\":true,\"recorded\":true}",
             recentInspections = listOf(

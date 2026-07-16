@@ -56,7 +56,8 @@ class LlamatikToolMapperTest {
         assertContains(prompt, "Bienenstock 4")
         assertContains(prompt, "košnicu 4")
         assertContains(prompt, "кошницу 4")
-        assertContains(prompt, "preserve identifiers exactly")
+        assertContains(prompt, "preserve identifier meaning exactly")
+        assertContains(prompt, "never prefix an identifier")
         assertContains(prompt, "Never invent")
     }
 

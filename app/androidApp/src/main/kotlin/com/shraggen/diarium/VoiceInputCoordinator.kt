@@ -61,7 +61,6 @@ internal class VoiceInputCoordinator(
     fun start() {
         val state = mutableUiState.value
         if (state.isBusy ||
-            state.modelStatus !is ModelStatus.Ready ||
             state.speechModelStatus !is SpeechModelStatus.Ready
         ) {
             return

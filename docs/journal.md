@@ -408,3 +408,238 @@ After that guardrail is green, add model profiles and compare multilingual
 Whisper base versus small plus the current 0.5B command model versus a stronger
 candidate. Measure accuracy, latency, memory, thermal behavior, and battery on
 the same fixed corpus before changing the default.
+
+---
+
+## 2026-07-14 — Multilingual identifier consistency guardrail
+
+### Completed
+
+- Added a pure common Kotlin hive-identifier consistency checker between tool
+  planning and confirmation.
+- The checker extracts only identifiers that follow explicit hive vocabulary.
+  It supports Arabic digits and unambiguous number words through 99 in English,
+  German, Serbian Latin, and Serbian Cyrillic.
+- A proposal can now be confirmed only when one explicit transcript identifier
+  matches `record_inspection.hive_id`. Missing identifiers, multiple different
+  identifiers, non-record tools, and malformed identifier arguments remain
+  unverifiable instead of being guessed.
+- A transcript/proposal mismatch is never rewritten. Confirmation is blocked
+  and the UI shows both the transcript hive and model-proposed hive in localized
+  English, German, or Serbian copy.
+- Replaced the raw-JSON confirmation presentation with domain-aware Hive and
+  Queen seen fields. The exact `ToolCall`, including its original arguments, is
+  retained in pending state for diagnostics.
+- Added a table-driven multilingual evaluation corpus covering valid commands,
+  noisy punctuation, missing and multiple identifiers, the Serbian `košnica,
+  pet` versus `4` regression, malformed model JSON, cancel, and confirmed
+  persistence.
+
+### Verification completed
+
+- `./gradlew :app:sharedLogic:allTests :app:sharedUI:allTests`
+- `./gradlew detekt :app:sharedLogic:allTests :app:sharedUI:allTests`
+- `./gradlew :core:jvmTest :app:androidApp:assembleDebug`
+- `./gradlew :app:androidApp:connectedDebugAndroidTest` on an SM-A546B
+- Four connected-device tests passed. The optional provisioned-Whisper model
+  initialization test was skipped because no model was supplied to that test
+  invocation.
+
+### Remaining physical acceptance
+
+Repeat the exact Serbian microphone phrase that previously transcribed as
+`košnica, pet`. If the model proposes hive 5, confirmation should remain
+available. If it proposes hive 4 or any other identifier, the localized
+mismatch card must display both values and keep confirmation disabled. Do not
+start model-profile benchmarking until this unlocked-device check is complete.
+
+---
+
+## 2026-07-14 — Field-driven dual consistency boundary
+
+### Four-run voice finding
+
+The application owner repeated voice input in English, German, and Serbian and
+supplied four screenshots. The identifier guard prevented every unsafe write,
+including the Serbian five case, so the physical safety acceptance is complete.
+The command-model output was not yet usable:
+
+- English transcript identifier `4` became `Hive 4`.
+- German transcript identifier `4` became `Bienenstock 4`.
+- A damaged Serbian four transcript produced `trapeze_1` and incorrectly set
+  `queen_seen` to false despite `video maticu` in the transcript.
+- Serbian transcript identifier `5` became the inflected word `peta`.
+
+The first identifier guard therefore worked as intended, but the Serbian four
+run exposed that identifier agreement alone was insufficient to approve a
+journal write.
+
+### Completed
+
+- Added a pure common Kotlin queen-observation consistency checker for explicit
+  positive and negative statements in English, German, Serbian Latin, and
+  Serbian Cyrillic.
+- Confirmation now requires both a verified hive identifier and a verified
+  queen observation. A mismatch, missing observation, contradictory statement,
+  missing boolean, or quoted boolean keeps confirmation disabled.
+- Made `queen_seen` required in the tool schema and removed the previous silent
+  default to false.
+- Hardened the structured prompt and parameter descriptions so identifier
+  arguments must contain only their canonical value. Numeric number words must
+  become ASCII digits; field labels, ordinals such as `peta`, and placeholders
+  are explicitly forbidden.
+- Added the unambiguous Whisper spelling `četri`/`четри` for Serbian four while
+  retaining conservative blocking for damaged queen phrases that cannot be
+  verified.
+- Added all four physical transcripts and their exact bad model proposals to
+  the table-driven evaluation corpus.
+- Tightened `ToolArguments.booleanOrNull` so the JSON string `"true"` is not
+  accepted as the boolean `true`.
+
+### Verification completed
+
+- `./gradlew :core:jvmTest :app:sharedLogic:allTests :app:sharedUI:allTests`
+- `./gradlew detekt :app:androidApp:assembleDebug`
+- `./gradlew :core:detektMetadataMain :app:sharedLogic:detektMetadataMain`
+- `./gradlew :app:androidApp:connectedDebugAndroidTest` on an SM-A546B
+- Four connected-device tests passed with zero failures and zero skips. The
+  connected run installed the rebuilt debug application.
+
+### Governance finding
+
+The aggregate `detekt` task remains green, but it reports `NO-SOURCE` for the
+KMP common modules. Explicit shared-logic metadata analysis is now green.
+Explicit shared-UI metadata analysis is not a usable gate yet because it scans
+generated Compose resource code and also exposes pre-existing App composable
+complexity and naming findings. Configure exclusions and address the real UI
+findings before claiming that aggregate Detekt covers all common code.
+
+### Next physical acceptance
+
+Repeat the same four voice runs against the newly installed build. A successful
+proposal must use only `4` or `5` for `hive_id` and must match the explicit queen
+observation. Any prefixed, inflected, invented, missing, or contradictory value
+must remain blocked. Record the four canonical-identifier and queen-observation
+outcomes before deciding whether prompt hardening is enough or a stronger local
+command model is required.
+
+---
+
+## 2026-07-14 — Deterministic inspection planning pivot
+
+### Field decision
+
+A second four-run English, German, and Serbian voice test produced only one
+fully usable command-model proposal. The guardrails prevented unsafe writes,
+but prompt hardening did not make the 0.5B model reliable enough for the primary
+journal workflow. Llamatik's one-shot generation was confirmed to start with a
+fresh KV state, so accumulated conversation state was not the cause.
+
+The owner approved replacing model-backed planning for the bounded
+`record_inspection` fields with deterministic common Kotlin and supplied the
+field transcripts as permanent regressions.
+
+### Completed
+
+- Added the provider-neutral `ToolCallPlanner` core contract. The existing
+  structured-model adapter and deterministic planners can use the same kernel
+  plan/execute boundary.
+- Added `RecordInspectionPlanner`, which canonicalizes a single explicit hive
+  identifier and queen observation. Missing, multiple, contradictory, hedged,
+  or unsupported values are omitted instead of guessed.
+- Promoted the identifier and queen extraction logic into reusable components;
+  the consistency checkers remain as independent defense in depth.
+- Replaced Serbian queen phrase enumeration with a bounded token grammar that
+  accepts auxiliary word order such as `video sam maticu`, including mixed
+  Latin/Cyrillic transcripts, while retaining negation and uncertainty checks.
+- Routed typed and Whisper-transcribed inspection input through the
+  deterministic planner. The production path no longer requires GGUF model
+  initialization.
+- Removed the unused GGUF picker, automatic command-model restoration, and
+  command-model UI state. The Llamatik planner adapter remains available for a
+  future open-ended tool but is not loaded by the inspection screen.
+- Added exact regressions for the successful English run, both German runs,
+  and the mixed-script Serbian `pet` / `video sam maticu` run. All four now
+  produce canonical numeric identifiers and `queen_seen = true` without model
+  inference.
+- Added ADR 0006 and updated the architecture, model, and testing documents to
+  reflect deterministic production planning.
+
+### Observability and evaluation decision
+
+Do not add a backend telemetry stack to the offline app yet. Establish a fixed,
+versioned corpus and measure per-field exact match, complete-command accuracy,
+abstention, and false accepts. False accepts are the safety-critical metric;
+abstention is an intended outcome for uncertain input.
+
+Once consented golden audio exists, measure Whisper WER/CER separately from
+end-to-end field accuracy. On representative phones, measure p50/p95 stage
+latency, peak process RSS, Java/native heap, thermal behavior, and battery over
+a fixed repeated run. Android Studio Profiler and Perfetto are sufficient for
+the initial device work. The next runtime increment should be a
+privacy-preserving local diagnostic event stream and user-driven JSON export,
+not OpenTelemetry or continuous profiling infrastructure.
+
+### Verification
+
+- `:app:sharedLogic:testAndroidHostTest --rerun-tasks` passed after the new
+  field regressions exposed and corrected a receiver-scoping defect in the
+  Serbian matcher.
+- `:app:sharedLogic:allTests`, `:app:sharedUI:allTests`, Android Detekt,
+  explicit core/shared-logic metadata Detekt, `assembleDebug`, and `lintDebug`
+  passed.
+- `:core:jvmTest` production and test compilation passed, but the suite is
+  currently red because a separate uncommitted architecture-metrics test scans
+  the nonexistent package `com.shraggen.diarium.core`, obtains A=0 and I=0, and
+  intentionally fails its distance threshold. Validate that metric's scope and
+  purpose before treating it as a CI fitness function.
+
+### Next physical acceptance
+
+Install the rebuilt APK and repeat the same four voice recordings. No GGUF
+model should be requested or loaded. Each confirmation card should show hive 4
+or 5 and queen seen Yes/Ja/Да. Then test one ambiguous or hedged phrase and
+verify that confirmation remains blocked. After that, add the small local
+diagnostic event model and export before considering any telemetry SDK.
+
+---
+
+## 2026-07-16 — Executable specification foundation
+
+### Decision
+
+The journal remains the product domain; deterministic parsing is an adapter for
+one bounded journaling command, not the product itself. Add a lightweight
+specification layer now so future tools inherit common safety contracts without
+requiring every possible utterance to become a hand-written regression.
+
+Keep dependency injection explicit through constructors while the composition
+root is small. Koin may be introduced later at the Android/iOS composition
+edge if object graph lifecycle or platform bindings become difficult; domain,
+planner, kernel, and tool tests must remain container-free.
+
+### Completed
+
+- Added Gherkin features for recording and reviewing hive inspections.
+- Added executable BDD-style common tests covering multilingual planning,
+  explicit confirmation, cancellation, ambiguity, and newest-first retrieval.
+- Added kernel invariants for the plan/execute boundary, blank input, unknown
+  tools, and duplicate tool registration.
+- Added reusable deterministic-planner and mutating-tool conformance helpers.
+- Added KMP property tests that generate arbitrary numeric identifiers and
+  formatting variations across English, German, Serbian Latin, and Serbian
+  Cyrillic, plus ambiguity and no-invention properties.
+- Extended the shared-UI confirmation contract so only complete proposals whose
+  identifier and queen observation both match the transcript can be confirmed.
+- Hardened `RecordInspectionTool` so a missing identifier returns a failure
+  without throwing or writing, as required by the mutating-tool contract.
+
+### Verification
+
+- `:core:jvmTest` passed, including four kernel invariant tests.
+- `:app:sharedLogic:allTests` passed. The Android host run executed five feature
+  scenarios, two conformance tests, and three property checks with 300 generated
+  cases per property; iOS simulator test sources also compiled successfully.
+- `:app:sharedUI:allTests` passed.
+- aggregate Detekt plus explicit core and shared-logic metadata Detekt passed.
+- Android `assembleDebug` and `lintDebug` passed.

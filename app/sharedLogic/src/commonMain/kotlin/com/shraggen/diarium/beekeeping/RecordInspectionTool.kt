@@ -16,11 +16,21 @@ class RecordInspectionTool(
 
         parameters {
             stringRequired("hive_id") {
-                description("Identifier of the inspected hive.")
+                description(
+                    "Exact identifier value only. For numeric identifiers, return " +
+                        "canonical ASCII digits: hive four, Bienenstock vier, and " +
+                        "košnica četiri must all produce 4. Never include words such " +
+                        "as Hive or Bienenstock, use an ordinal such as peta, or invent " +
+                        "a placeholder.",
+                )
             }
 
-            boolean("queen_seen") {
-                description("Whether the queen was observed.")
+            booleanRequired("queen_seen") {
+                description(
+                    "True only when the transcript explicitly says the queen was seen; " +
+                        "false only when it explicitly says the queen was not seen. " +
+                        "Never infer or default this observation.",
+                )
             }
         }
     }
@@ -28,13 +38,23 @@ class RecordInspectionTool(
     override suspend fun execute(
         arguments: ToolArguments,
     ): ToolResult {
-        val hiveId = arguments.string("hive_id").trim()
-        val queenSeen = arguments.booleanOrNull("queen_seen") ?: false
+        val hiveId = arguments.stringOrNull("hive_id")?.trim().orEmpty()
+        val queenSeen = arguments.booleanOrNull("queen_seen")
 
-        if (hiveId.isEmpty()) {
-            return ToolResult.Failure("Hive identifier must not be blank.")
+        return when {
+            hiveId.isEmpty() ->
+                ToolResult.Failure("Hive identifier must not be blank.")
+            queenSeen == null -> ToolResult.Failure(
+                "Queen observation must be supplied as a boolean.",
+            )
+            else -> recordInspection(hiveId, queenSeen)
         }
+    }
 
+    private suspend fun recordInspection(
+        hiveId: String,
+        queenSeen: Boolean,
+    ): ToolResult {
         val inspection = repository.record(
             InspectionDraft(
                 hiveId = hiveId,

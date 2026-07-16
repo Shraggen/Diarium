@@ -1,8 +1,8 @@
 package com.shraggen.diarium
 
+import com.shraggen.diarium.speech.SpeechLanguage
 import com.shraggen.diarium.tool.ToolCall
 import com.shraggen.diarium.tool.ToolResult
-import com.shraggen.diarium.speech.SpeechLanguage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -29,11 +29,11 @@ class ToolCallCoordinator(
     fun plan() {
         val state = mutableUiState.value
         if (state.isProcessing ||
-            state.modelStatus !is ModelStatus.Ready ||
             state.userInput.isBlank()
         ) {
             return
         }
+        val userInput = state.userInput
 
         coroutineScope.launch {
             mutableUiState.update { current ->
@@ -46,16 +46,18 @@ class ToolCallCoordinator(
             plannedCall = null
 
             val outcome = runCatching {
-                runtime.plan(mutableUiState.value.userInput)
+                runtime.plan(userInput)
             }
             plannedCall = outcome.getOrNull()
 
             mutableUiState.update { current ->
                 current.copy(
                     isProcessing = false,
-                    pendingToolCall = plannedCall?.toPendingCall(),
+                    pendingToolCall = plannedCall?.let { call ->
+                        pendingToolCall(userInput, call)
+                    },
                     output = outcome.exceptionOrNull()?.failureMessage(
-                        prefix = "Inference failed: ",
+                        prefix = "Command planning failed: ",
                         fallback = "Unknown error.",
                     ).orEmpty(),
                 )
@@ -64,10 +66,8 @@ class ToolCallCoordinator(
     }
 
     fun confirm() {
-        val call = plannedCall ?: return
-        if (mutableUiState.value.isProcessing) {
-            return
-        }
+        val pendingCall = confirmedPendingCall() ?: return
+        val call = pendingCall.call
 
         coroutineScope.launch {
             mutableUiState.update { state ->
@@ -92,9 +92,22 @@ class ToolCallCoordinator(
                         ).orEmpty(),
                     recentInspections = execution?.inspections
                         ?: state.recentInspections,
-                    pendingToolCall = plannedCall?.toPendingCall(),
+                    pendingToolCall = if (plannedCall == null) {
+                        null
+                    } else {
+                        pendingCall
+                    },
                 )
             }
+        }
+    }
+
+    private fun confirmedPendingCall(): PendingToolCall? {
+        val state = mutableUiState.value
+        return state.pendingToolCall?.takeIf { pending ->
+            !state.isProcessing &&
+                pending.confirmationAllowed &&
+                pending.call == plannedCall
         }
     }
 
@@ -118,11 +131,6 @@ private fun cancellationMessage(language: SpeechLanguage): String =
         SpeechLanguage.SERBIAN ->
             "Предложена радња је отказана. Ништа није сачувано."
     }
-
-private fun ToolCall.toPendingCall() = PendingToolCall(
-    toolName = toolName,
-    arguments = arguments.toString(),
-)
 
 private fun ToolResult.displayText(): String =
     when (this) {
