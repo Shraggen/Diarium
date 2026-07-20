@@ -55,6 +55,7 @@ jobs:
         with:
           languages: ${{ matrix.language }}
           build-mode: ${{ matrix.build-mode }}
+          tools: linked
 
       # 3. Compile Step
       - name: Run manual build steps
