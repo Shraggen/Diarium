@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Shraggen/Diarium/compare/v0.2.0...v0.2.1) (2026-07-20)
+
+
+### Reverts
+
+* reverted kotlin version so codeql shuts up ([89d7cdc](https://github.com/Shraggen/Diarium/commit/89d7cdcf14fdca993ace9410a1806f5cf55fce25))
+
 ## [0.2.0](https://github.com/Shraggen/Diarium/compare/v0.1.0...v0.2.0) (2026-07-16)
 
 
