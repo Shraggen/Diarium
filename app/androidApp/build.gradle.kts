@@ -97,6 +97,21 @@ android {
         versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include(
+                "arm64-v8a",
+                "armeabi-v7a",
+                "x86_64",
+                "x86",
+            )
+            isUniversalApk = false
+        }
+    }
+
     signingConfigs {
         if (releaseSigningConfigured) {
             create("release") {
@@ -114,7 +129,14 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+
             if (releaseSigningConfigured) {
                 signingConfig = signingConfigs.getByName("release")
             }

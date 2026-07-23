@@ -1,12 +1,5 @@
 # Changelog
 
-## [0.2.2](https://github.com/Shraggen/Diarium/compare/v0.2.1...v0.2.2) (2026-07-23)
-
-
-### Bug Fixes
-
-* fail fast relase.yml ([1f4f4cd](https://github.com/Shraggen/Diarium/commit/1f4f4cd8e943de18efb228e88ddeec6aaac02c79))
-
 ## [0.2.1](https://github.com/Shraggen/Diarium/compare/v0.2.0...v0.2.1) (2026-07-20)
 
 
