@@ -4,6 +4,22 @@ Diarium uses a layered test strategy so most failures are found without an
 emulator, while Android-specific persistence and native speech dependencies
 are still exercised on a real Android runtime.
 
+```mermaid
+flowchart BT
+    Unit["Unit<br/>pure Kotlin contracts and transforms"]
+    Integration["Integration<br/>planner + kernel + tool + repository"]
+    Android["Android instrumentation<br/>Room, Activity, Silero, optional Whisper"]
+    Manual["Manual acceptance<br/>physical microphone and device behavior"]
+
+    Unit -->|"compose production components"| Integration
+    Integration -->|"add Android runtime"| Android
+    Android -->|"add real field conditions"| Manual
+```
+
+Each higher layer adds runtime fidelity and cost. Safety rules remain concentrated
+in the fast lower layers, while native integration and speech quality are
+verified where their real dependencies exist.
+
 | Layer | Scope | Current coverage |
 | --- | --- | --- |
 | Unit | Pure Kotlin contracts and transformations | JSON Schema, deterministic multilingual planning, guardrails, model-adapter parsing, Unicode transcript parsing, PCM16 WAV encoding |

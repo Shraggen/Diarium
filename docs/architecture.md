@@ -190,22 +190,66 @@ temporary-file cleanup. `VoiceInputCoordinator` turns the resulting transcript
 into normal command input; the rest of the kernel does not know whether text
 was typed or spoken.
 
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Recording: start with model ready
+    Recording --> Transcribing: sustained silence or manual stop
+    Transcribing --> Idle: transcript accepted
+    Recording --> Error: capture fails
+    Transcribing --> Error: transcription fails
+    Error --> Recording: retry with model ready
+```
+
+`VoiceStatus` represents these four states. Model loading is tracked separately
+by `SpeechModelStatus`, so a Whisper failure does not disable typed inspection
+planning or journal reads.
+
 ## 6. Runtime view
 
 ### Voice inspection write
 
-1. The user selects a language and starts recording.
-2. Android captures 16 kHz mono PCM16 frames.
-3. Silero VAD stops capture after sustained silence; a 30-second cap prevents
-   unbounded recording.
-4. The WAV is transcribed locally without translation and then deleted.
-5. The editable transcript is passed to `DiariumKernel.plan`.
-6. The deterministic inspection planner extracts one canonical hive identifier
-   and one explicit queen observation into a `ToolCall`; uncertain fields are omitted.
-7. The UI displays the tool and arguments. Room is unchanged.
-8. Cancel discards the proposal. Confirm calls `DiariumKernel.execute`.
-9. `RecordInspectionTool` validates the arguments and writes through Room.
-10. The journal refreshes from the repository.
+```mermaid
+sequenceDiagram
+    actor Worker as Field worker
+    participant UI as Compose UI
+    participant Voice as Android speech runtime
+    participant Kernel as DiariumKernel
+    participant Planner as RecordInspectionPlanner
+    participant Tool as RecordInspectionTool
+    participant Room as Room repository
+
+    Worker->>UI: Select language and start recording
+    UI->>Voice: Capture 16 kHz mono PCM16
+    Voice->>Voice: Stop on Silero silence or 30-second cap
+    Voice->>Voice: Transcribe locally and delete temporary WAV
+    Voice-->>UI: Editable transcript
+    Worker->>UI: Submit transcript
+    UI->>Kernel: plan(text)
+    Kernel->>Planner: plan(text)
+    Planner-->>Kernel: Canonical ToolCall
+    Kernel-->>UI: Reviewable proposal
+    Note over UI,Room: Planning leaves Room unchanged
+
+    alt Complete, consistent proposal and explicit confirmation
+        Worker->>UI: Confirm
+        UI->>Kernel: execute(call)
+        Kernel->>Tool: Validate and execute
+        Tool->>Room: Insert inspection
+        Room-->>Tool: Persisted record
+        Tool-->>Kernel: Success
+        Kernel-->>UI: Refresh journal
+    else Cancellation, edit, ambiguity, or contradiction
+        Worker->>UI: Cancel or revise
+        Note over UI,Room: No repository mutation
+    end
+```
+
+The deterministic planner extracts one canonical hive identifier and one
+explicit queen observation. It omits missing, ambiguous, contradictory, or
+hedged fields, which keeps confirmation blocked. Editing the transcript
+invalidates the pending proposal; confirmation is the only path to
+`DiariumKernel.execute`.
 
 ### Application startup
 

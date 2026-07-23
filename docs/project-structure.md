@@ -55,6 +55,26 @@ not recommended.
 
 ## Current module map
 
+```mermaid
+flowchart LR
+    Android["app/androidApp<br/>Android host and adapters"]
+    SharedUI["app/sharedUI<br/>Compose UI"]
+    SharedLogic["app/sharedLogic<br/>Domain and portable logic"]
+    Core["core<br/>Kernel and tool contracts"]
+    IOS["app/iosApp<br/>iOS host"]
+    AndroidNative["Audio, Whisper, Silero, Room"]
+
+    Android --> SharedUI
+    Android --> AndroidNative
+    SharedUI --> SharedLogic
+    IOS --> SharedLogic
+    SharedLogic --> Core
+```
+
+Arrows point from a consumer to the module or platform facilities it depends
+on. The shared dependency chain terminates at the domain-neutral `core`;
+Android-native facilities do not leak back into shared modules.
+
 | Module | Purpose |
 | --- | --- |
 | `core` | Domain-neutral schemas, tools, parser, executor, and kernel. |

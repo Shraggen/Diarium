@@ -111,6 +111,16 @@
   font-size: 0.82rem;
 }
 
+.mermaid {
+  overflow: auto;
+  text-align: center;
+}
+
+.mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
 @media screen and (min-width: 76.25em) {
   .diarium-hero {
     margin-top: 0;

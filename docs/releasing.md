@@ -6,6 +6,20 @@ by creating a release branch.
 
 ## Release flow
 
+```mermaid
+flowchart TD
+    Change["Feature or fix pull request"] --> PRGate{"CI and title checks pass?"}
+    PRGate -->|"no"| Change
+    PRGate -->|"yes; squash merge"| Main["main"]
+    Main --> RP["Release Please updates release PR"]
+    RP --> Ready{"Trunk ready to ship?"}
+    Ready -->|"not yet"| Main
+    Ready -->|"merge release PR"| Draft["Immutable version tag<br/>and draft GitHub Release"]
+    Draft --> ReleaseGate{"Tests, lint, signing,<br/>build, and checksum pass?"}
+    ReleaseGate -->|"no"| KeepDraft["Keep release as draft"]
+    ReleaseGate -->|"yes"| Publish["Publish release with signed APK<br/>and SHA-256 checksum"]
+```
+
 1. Merge normal pull requests into `main` using squash merge.
 2. Release Please reads the squash-merge titles and maintains one release pull
    request containing the next version and generated changelog.
