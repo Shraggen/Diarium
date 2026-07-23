@@ -128,6 +128,25 @@ jobs:
           --stacktrace
           --no-daemon
 
+      - name: Verify Android release signing key
+        shell: bash
+        run: |
+          csr_path="$RUNNER_TEMP/diarium-signing-check.csr"
+
+          if ! keytool -certreq \
+            -keystore "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE" \
+            -storepass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD \
+            -alias "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS" \
+            -keypass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD \
+            -file "$csr_path" \
+            >/dev/null; then
+            echo "::error::Android signing validation failed. Check the encoded keystore, keystore password, key alias, and key password."
+            exit 1
+          fi
+
+          rm -f "$csr_path"
+          echo "Android release signing key validated."
+
       - name: Verify APK signature
         shell: bash
         run: |
