@@ -147,10 +147,9 @@ jobs:
           rm -f "$csr_path"
           echo "Android release signing key validated."
 
-      - name: Verify APK signature
+      - name: Verify APK signatures
         shell: bash
         run: |
-          apk_path="app/androidApp/build/outputs/apk/release/androidApp-release.apk"
           apksigner_path="$(
             find "$ANDROID_HOME/build-tools" -type f -name apksigner \
               | sort -V \
@@ -160,18 +159,29 @@ jobs:
             echo "apksigner was not found in the Android SDK."
             exit 1
           fi
-          "$apksigner_path" verify --verbose --print-certs "$apk_path"
+
+          for apk in app/androidApp/build/outputs/apk/release/*.apk; do
+            echo "Verifying $apk..."
+            "$apksigner_path" verify --verbose --print-certs "$apk"
+          done
 
       - name: Prepare release assets
         shell: bash
         run: |
           mkdir -p release-assets
-          asset_name="Diarium-${RELEASE_TAG}.apk"
-          cp \
-            app/androidApp/build/outputs/apk/release/androidApp-release.apk \
-            "release-assets/$asset_name"
+
+          for apk in app/androidApp/build/outputs/apk/release/*.apk; do
+            filename=$(basename "$apk")
+            abi=$(echo "$filename" | sed -E 's/androidApp-(.*)-release\.apk/\1/')
+            
+            target_name="Diarium-${RELEASE_TAG}-${abi}.apk"
+            cp "$apk" "release-assets/$target_name"
+          done
+
           pushd release-assets
-          sha256sum "$asset_name" > "$asset_name.sha256"
+          for asset in *.apk; do
+            sha256sum "$asset" > "$asset.sha256"
+          done
           popd
 
       - name: Attest public release artifact
