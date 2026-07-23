@@ -727,3 +727,55 @@ against `/assets` instead of `/Diarium/assets`.
 - The generated root contains the landing-page content, no 404 marker, a
   canonical `/Diarium/` URL, and relative project-safe asset links.
 - All GitHub workflows passed `actionlint`.
+
+---
+
+## 2026-07-24 — Product validation framing and mobile reliability roadmap
+
+### Decision
+
+Treat beekeeping as the reference vertical for validating Diarium, rather than
+expanding the generic tool platform ahead of field evidence. The immediate
+question is whether a midrange Android phone can provide a useful, trustworthy,
+fully offline journaling workflow; live sync, desktop reprocessing, and a
+second profession remain conditional follow-up work.
+
+The required safety boundary remains unchanged: local models may create a
+proposal, but only deterministic validation and explicit confirmation create a
+journal fact. Stronger hardware may later reprocess retained evidence and emit
+new proposals, but it must never silently rewrite a confirmed entry.
+
+### Completed
+
+- Added a mobile reliability and syncable-reprocessing plan, defining the
+  four-tool beekeeping experiment, evidence retention, proposal provenance,
+  device acceptance gates, and the conditional encrypted-relay roadmap.
+- Added a Lean Canvas that separates product assumptions from evidence and
+  orders the riskiest experiments: field problem validation, workflow
+  comparison, technical benchmark, pilot, then reprocessing and sync.
+- Added a lightweight PRD for the offline mobile field-journal experiment.
+  It specifies the target user, review flow, four supported mutations,
+  privacy constraints, failure behavior, evaluation corpus, and go/no-go
+  outcomes.
+- Added a Product section to the MkDocs navigation for the Lean Canvas, PRD,
+  and mobile reliability plan.
+
+### Locked initial assumptions
+
+- Validate mobile quality before implementing synchronization.
+- Target Android devices from 2022 or newer with roughly 6 GB RAM.
+- Use hybrid deterministic and local-model planning, with zero incorrect
+  proposals eligible for confirmation and at least 85% exact complete drafts
+  on supported, unambiguous recordings.
+- Retain field audio privately by default so stronger hardware can reprocess
+  it later; users may delete the retained audio independently of the journal
+  entry.
+- A future encrypted relay transports opaque events and evidence only. It is
+  optional and does not perform inference or decide journal truth.
+
+### Verification
+
+- `git diff --check` passed after the documentation changes.
+- The local environment does not currently have `mkdocs` installed, so
+  `mkdocs build --strict` could not be run. The documentation workflow installs
+  `mkdocs-material` and performs that strict build in CI.

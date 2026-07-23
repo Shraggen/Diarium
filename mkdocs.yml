@@ -60,6 +60,10 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Product:
+      - Lean Canvas: product/lean-canvas.md
+      - Mobile field-journal PRD: product/prd-mobile-field-journal.md
+      - Mobile reliability plan: plans/mobile-reliability-and-reprocessing.md
   - Architecture:
       - Overview: architecture.md
       - Project structure: project-structure.md
