@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.3](https://github.com/Shraggen/Diarium/compare/v0.2.2...v0.2.3) (2026-07-23)
+
+
+### Bug Fixes
+
+* broken ahh release.yml ([2fc2d32](https://github.com/Shraggen/Diarium/commit/2fc2d32e55e15443266e989fa1f83121945603eb))
+
 ## [0.2.2](https://github.com/Shraggen/Diarium/compare/v0.2.1...v0.2.2) (2026-07-23)
 
 
