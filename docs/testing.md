@@ -70,7 +70,7 @@ owned multilingual corpus or physical microphone acceptance.
 
 ## CI gates
 
-The main CI workflow has three jobs:
+The main CI workflow first classifies changed paths. For affected code:
 
 1. Linux runs Detekt, Konsist/core tests, all shared-logic and shared-UI tests,
    Android lint, and debug app/test APK builds.
@@ -78,10 +78,18 @@ The main CI workflow has three jobs:
    instrumentation suite under Android Test Orchestrator.
 3. macOS builds the iOS simulator app and its embedded KMP framework.
 
-CodeQL independently scans Actions, Java/Kotlin, and Swift. Its manual build
-now compiles the real core, shared, Android, and iOS targets. JavaScript was
-removed from the matrix because this repository has no JavaScript product
-source.
+Android-only changes skip the macOS build. iOS-host-only changes skip the
+Android build and emulator. Shared modules and build-system files run both
+platform paths. Documentation-only pull requests retain the lightweight
+change-detection and pull-request-title checks while skipping all platform
+runners.
+
+The documentation workflow runs `mkdocs build --strict` for pull requests and
+pushes that affect the documentation site, but deploys only from `main`.
+Documentation-only changes do not start CodeQL or release automation. CodeQL's
+weekly scheduled scan still runs unconditionally; source-triggered scans
+compile the real core, shared, Android, and iOS targets. JavaScript is absent
+from the matrix because this repository has no JavaScript product source.
 
 Test reports, lint reports, and Android APKs are retained as workflow
 artifacts. Workflow concurrency cancels stale runs for the same branch.

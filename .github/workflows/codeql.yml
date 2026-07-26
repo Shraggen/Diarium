@@ -9,8 +9,44 @@ on:
     - cron: '44 19 * * 2'
 
 jobs:
+  changes:
+    name: Detect security-relevant changes
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      source: ${{ steps.filter.outputs.source }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Detect security-relevant changes
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            source:
+              - '.github/**'
+              - 'app/**'
+              - 'core/**'
+              - 'config/**'
+              - 'gradle/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradlew.bat'
+
   analyze:
     name: Analyze (${{ matrix.language }})
+    needs: changes
+    if: >-
+      always() &&
+      (github.event_name == 'schedule' || needs.changes.outputs.source == 'true')
     runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
     timeout-minutes: 60
     permissions:

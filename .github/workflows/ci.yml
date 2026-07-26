@@ -12,8 +12,53 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
+  changes:
+    name: Detect affected platforms
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      android: ${{ steps.filter.outputs.android }}
+      ios: ${{ steps.filter.outputs.ios }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Detect affected platforms
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            android:
+              - 'app/androidApp/**'
+              - 'app/sharedLogic/**'
+              - 'app/sharedUI/**'
+              - 'core/**'
+              - 'config/**'
+              - 'gradle/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - 'version.txt'
+              - '.github/workflows/ci.yml'
+            ios:
+              - 'app/iosApp/**'
+              - 'app/sharedLogic/**'
+              - 'app/sharedUI/**'
+              - 'core/**'
+              - 'gradle/**'
+              - 'build.gradle.kts'
+              - 'settings.gradle.kts'
+              - 'gradle.properties'
+              - 'gradlew'
+              - 'gradlew.bat'
+              - '.github/workflows/ci.yml'
+
   conventional-pr-title:
     name: Conventional pull request title
     if: github.event_name == 'pull_request'
@@ -34,6 +79,8 @@ jobs:
 
   quality-and-build:
     name: Static analysis, tests, and Android build
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -93,7 +140,13 @@ jobs:
 
   android-instrumentation:
     name: Room and launch tests on Android emulator
-    needs: quality-and-build
+    needs:
+      - changes
+      - quality-and-build
+    if: >-
+      always() &&
+      needs.changes.outputs.android == 'true' &&
+      needs.quality-and-build.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 35
 
@@ -141,6 +194,8 @@ jobs:
 
   ios-build:
     name: Build iOS simulator app
+    needs: changes
+    if: needs.changes.outputs.ios == 'true'
     runs-on: macos-latest
     timeout-minutes: 35
 
