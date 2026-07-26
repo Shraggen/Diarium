@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.4](https://github.com/Shraggen/Diarium/compare/v0.2.3...v0.2.4) (2026-07-26)
+
+
+### Performance Improvements
+
+* upgraded libraries ([dca625e](https://github.com/Shraggen/Diarium/commit/dca625e9e32911ebb1c6d2f9d456525079a1a3d0))
+
 ## [0.2.3](https://github.com/Shraggen/Diarium/compare/v0.2.2...v0.2.3) (2026-07-23)
 
 
