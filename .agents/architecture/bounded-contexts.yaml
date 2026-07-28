@@ -1,0 +1,23 @@
+version: 1
+
+# Diarium is an Android-first Kotlin Multiplatform application. The beekeeping
+# journal is its current business bounded context; the reusable tool kernel and
+# mobile hosts are supporting platforms described in context-map.yaml.
+contexts:
+  beekeeping-journal:
+    domain_roots:
+      - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/beekeeping
+    application_roots:
+      - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/DiariumController.kt
+      - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/speech
+    infrastructure_roots:
+      - app/androidApp/src/main/kotlin/com/shraggen/diarium/persistence
+    published_interfaces:
+      - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/beekeeping/InspectionRepository.kt
+      - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/beekeeping/InspectionRecord.kt
+    forbidden_domain_path_fragments:
+      - /persistence/
+      - /androidApp/
+      - /sharedUI/
+      - /androidMain/
+      - /iosMain/

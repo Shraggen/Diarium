@@ -1,0 +1,28 @@
+rules:
+  - id: domain-imports-infrastructure-python
+    message: Domain code must not import infrastructure directly; introduce a port or move orchestration outward.
+    severity: ERROR
+    languages: [python]
+    paths:
+      include:
+        - "**/domain/**/*.py"
+    patterns:
+      - pattern-either:
+          - pattern: import $X.infrastructure.$Y
+          - pattern: from $X.infrastructure.$Y import ...
+          - pattern: import $X.adapters.$Y
+          - pattern: from $X.adapters.$Y import ...
+
+  - id: domain-imports-infrastructure-javascript
+    message: Domain code must not import infrastructure directly; introduce a port or move orchestration outward.
+    severity: ERROR
+    languages: [javascript, typescript]
+    paths:
+      include:
+        - "**/domain/**/*"
+    patterns:
+      - pattern-either:
+          - pattern: import $X from ".../infrastructure/..."
+          - pattern: import $X from ".../adapters/..."
+          - pattern: require(".../infrastructure/...")
+          - pattern: require(".../adapters/...")

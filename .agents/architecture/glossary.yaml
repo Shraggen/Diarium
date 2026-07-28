@@ -1,0 +1,37 @@
+version: 1
+
+contexts:
+  beekeeping-journal:
+    preferred_terms:
+      inspection: "A field-worker observation of one hive, proposed from text or speech and recorded only after confirmation."
+      inspection-draft: "The unpersisted hive identifier and queen observation passed to the inspection repository."
+      hive-identifier: "The canonical identifier for a hive; numeric identifiers use ASCII digits."
+      queen-observation: "An explicit true or false statement about whether the queen was seen; it is never inferred."
+      inspection-repository: "The port through which a confirmed inspection is recorded and recent inspections are read."
+      record-inspection: "The registered mutating tool that validates and persists a confirmed inspection."
+    discouraged_terms:
+      - manager
+      - helper
+      - processor
+      - hive-data
+
+  diarium-kernel:
+    preferred_terms:
+      tool: "A typed operation with a JSON-schema specification and deterministic execution."
+      tool-call: "A canonical proposed invocation of a registered tool and its arguments."
+      planning: "The side-effect-free conversion of user input into a tool call."
+      execution: "The effect boundary that runs a validated tool call after explicit confirmation."
+      tool-call-planner: "The contract used by the kernel to create a tool call from user input."
+    discouraged_terms:
+      - command-manager
+      - generic-handler
+      - execute-data
+
+  speech-input:
+    preferred_terms:
+      transcript: "Editable text produced from typed input or local multilingual speech transcription."
+      voice-status: "The recording, transcribing, idle, or error state of voice capture."
+      whisper-model: "A user-imported multilingual local model used for speech transcription."
+    discouraged_terms:
+      - audio-processor
+      - speech-helper

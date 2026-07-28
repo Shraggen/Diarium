@@ -1,0 +1,27 @@
+# Copy this file to .github/CODEOWNERS to enable reviews. Diarium is maintained
+# by the repository owner; no GitHub organization teams are configured.
+
+# Global fallback
+* @Shraggen
+
+# Kotlin Multiplatform module boundaries
+/core/ @Shraggen
+/app/sharedLogic/ @Shraggen
+/app/sharedUI/ @Shraggen
+/app/androidApp/ @Shraggen
+/app/iosApp/ @Shraggen
+
+# Build, verification, and documentation
+/config/ @Shraggen
+/gradle/ @Shraggen
+/build.gradle.kts @Shraggen
+/settings.gradle.kts @Shraggen
+/gradle.properties @Shraggen
+/docs/ @Shraggen
+/.github/ @Shraggen
+
+# Agent policy and architecture governance
+/.agents/ @Shraggen
+/AGENTS.md @Shraggen
+/CLAUDE.md @Shraggen
+/.claude/ @Shraggen

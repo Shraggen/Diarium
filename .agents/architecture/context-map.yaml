@@ -1,0 +1,59 @@
+version: 1
+
+# This is a single-maintainer repository. "Shraggen" is the repository owner
+# and the only verifiable owner in the Git remote/history; no GitHub team is
+# configured for this project.
+contexts:
+  beekeeping-journal:
+    team: Shraggen
+    roots:
+      - app/sharedLogic
+    relationships:
+      diarium-kernel:
+        mode: customer-supplier
+        interfaces:
+          - core/src/commonMain/kotlin/com/shraggen/diarium/tool
+          - core/src/commonMain/kotlin/com/shraggen/diarium/schema
+      android-runtime:
+        mode: customer-supplier
+        interfaces:
+          - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/beekeeping/InspectionRepository.kt
+      shared-presentation:
+        mode: collaboration
+        interfaces:
+          - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/DiariumController.kt
+          - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/beekeeping
+          - app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/speech
+
+platforms:
+  diarium-kernel:
+    team: Shraggen
+    roots:
+      - core
+    published_interfaces:
+      - core/src/commonMain/kotlin/com/shraggen/diarium/DiariumKernel.kt
+      - core/src/commonMain/kotlin/com/shraggen/diarium/tool
+      - core/src/commonMain/kotlin/com/shraggen/diarium/schema
+      - core/src/commonMain/kotlin/com/shraggen/diarium/provider/StructuredJsonGenerator.kt
+
+  shared-presentation:
+    team: Shraggen
+    roots:
+      - app/sharedUI
+    published_interfaces:
+      - app/sharedUI/src/commonMain/kotlin/com/shraggen/diarium/App.kt
+      - app/sharedUI/src/commonMain/kotlin/com/shraggen/diarium/PendingToolCall.kt
+
+  android-runtime:
+    team: Shraggen
+    roots:
+      - app/androidApp
+    published_interfaces:
+      - app/androidApp/src/main/kotlin/com/shraggen/diarium/AndroidDiariumRuntime.kt
+      - app/androidApp/src/main/kotlin/com/shraggen/diarium/AndroidSpeechRuntime.kt
+
+  ios-host:
+    team: Shraggen
+    roots:
+      - app/iosApp
+    published_interfaces: []

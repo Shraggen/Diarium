@@ -1,0 +1,33 @@
+version: 1
+
+characteristics:
+  deployability:
+    intent: "Every completed slice can be deployed independently."
+    evidence:
+      - targeted build and tests
+      - explicit rollout path
+      - independent rollback
+
+  recoverability:
+    intent: "Failed changes can be disabled or reverted quickly."
+    evidence:
+      - rollback command or feature-flag path
+      - observable release identity
+
+  bounded-context-integrity:
+    intent: "Domain logic and dependencies remain inside declared boundaries."
+    evidence:
+      - architecture tests
+      - published-interface checks
+      - CODEOWNERS review
+
+  operability:
+    intent: "Changed behavior is diagnosable in production."
+    evidence:
+      - useful logs, metrics, traces, alerts, or runbook updates
+
+  security:
+    intent: "Changes do not broaden privileges or introduce known secret or dependency risks."
+    evidence:
+      - configured security checks
+      - permission review for high-impact actions
