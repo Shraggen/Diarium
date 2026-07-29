@@ -14,8 +14,8 @@ Record hive inspections by typing or speaking in English, German, or Serbian.
 Diarium plans a reviewable journal action locally and writes nothing until the
 beekeeper explicitly confirms it.
 
-[Explore the architecture](architecture.md){ .md-button .md-button--primary }
-[Read the release process](releasing.md){ .md-button }
+[Build your first APK](getting-started.md){ .md-button .md-button--primary }
+[Explore the architecture](architecture.md){ .md-button }
 
 </div>
 
@@ -83,11 +83,27 @@ beekeeper explicitly confirms it.
 
 ## Start here
 
-| If you want to understand… | Read… |
-| --- | --- |
-| The system and its boundaries | [Architecture overview](architecture.md) |
-| Why planning cannot save data | [Plan, confirm, execute](decisions/0002-plan-confirm-execute.md) |
-| Why inspection planning became deterministic | [ADR 0006](decisions/0006-deterministic-inspection-planning.md) |
-| How behavior is specified and verified | [Testing strategy](testing.md) |
-| How trunk becomes a GitHub Release | [Release process](releasing.md) |
-| How the project evolved | [Project journal](journal.md) |
+### Learn by doing
+
+Follow [Build your first Diarium APK](getting-started.md) for one concrete path
+from a fresh checkout to a successful Android build.
+
+### Complete a task
+
+- [Verify a change](verifying-changes.md) before opening a pull request.
+- [Prepare a release](releasing.md) when a version is ready for publication.
+
+### Look up the project
+
+- [Project structure](project-structure.md) maps modules and source sets.
+- [Testing strategy](testing.md) describes test layers, gates, and coverage.
+
+### Understand the design
+
+- [Architecture overview](architecture.md) explains the system and its
+  boundaries.
+- [Plan, confirm, execute](decisions/0002-plan-confirm-execute.md) explains why
+  planning cannot save data.
+- [Deterministic inspection planning](decisions/0006-deterministic-inspection-planning.md)
+  explains why bounded facts no longer use generated JSON.
+- [Project journal](journal.md) records how the project evolved.

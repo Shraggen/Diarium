@@ -60,6 +60,11 @@ extra_javascript:
 
 nav:
   - Home: index.md
+  - Learn:
+      - Build your first APK: getting-started.md
+  - How-to guides:
+      - Verify a change: verifying-changes.md
+      - Prepare a release: releasing.md
   - Product:
       - Lean Canvas: product/lean-canvas.md
       - Mobile field-journal PRD: product/prd-mobile-field-journal.md
@@ -77,5 +82,4 @@ nav:
   - Development:
       - Development model: development-model.md
       - Testing strategy: testing.md
-      - Release process: releasing.md
       - Project journal: journal.md

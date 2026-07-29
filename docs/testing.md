@@ -94,24 +94,15 @@ from the matrix because this repository has no JavaScript product source.
 Test reports, lint reports, and Android APKs are retained as workflow
 artifacts. Workflow concurrency cancels stale runs for the same branch.
 
-## Local verification
+## Local verification scope
 
-Run the non-device gate with:
+The local non-device gate covers static analysis, core and shared tests,
+Android lint, and debug application and test APK assembly. The connected
+Android gate adds Room, Activity, Silero, and optional Whisper coverage on an
+emulator or device.
 
-```powershell
-.\gradlew.bat detekt :core:jvmTest :app:sharedLogic:allTests `
-  :app:sharedUI:allTests :app:androidApp:assembleDebug `
-  :app:androidApp:assembleDebugAndroidTest :app:androidApp:lintDebug
-```
-
-Run Android instrumentation with:
-
-```powershell
-.\gradlew.bat :app:androidApp:connectedDebugAndroidTest
-```
-
-`connectedDebugAndroidTest` installs and later removes the target package.
-Use an emulator or a test device when its app data matters.
+The task-oriented commands and change-scope decision table are in
+[How to verify a change](verifying-changes.md).
 
 The Whisper initialization test skips when no `.bin` file exists in the
 target app's private `files/whisper-models` directory. CI still exercises
