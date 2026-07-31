@@ -1,3 +1,4 @@
+import org.cyclonedx.model.Component
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -7,6 +8,7 @@ plugins {
     alias(libs.plugins.detekt)
     alias(libs.plugins.ksp)
     alias(libs.plugins.androidx.room)
+    alias(libs.plugins.cyclonedx)
 }
 
 val appVersionName = rootProject.file("version.txt").readText().trim()
@@ -149,4 +151,13 @@ android {
     testOptions {
         execution = "ANDROIDX_TEST_ORCHESTRATOR"
     }
+}
+
+tasks.cyclonedxDirectBom {
+    includeConfigs = listOf("releaseRuntimeClasspath")
+    projectType = Component.Type.APPLICATION
+    componentName = "Diarium"
+    componentVersion = appVersionName
+    jsonOutput.set(rootProject.layout.buildDirectory.file("reports/sbom/android-release.cdx.json"))
+    xmlOutput.unsetConvention()
 }

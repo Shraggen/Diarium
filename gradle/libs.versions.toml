@@ -22,6 +22,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-orchestrator = "1.6.1"
 junit4 = "4.13.2"
 kotest = "6.2.3"
+cyclonedx = "3.2.4"
 
 [libraries]
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
@@ -62,3 +63,4 @@ ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 androidx-room = { id = "androidx.room", version.ref = "room" }
+cyclonedx = { id = "org.cyclonedx.bom", version.ref = "cyclonedx" }
