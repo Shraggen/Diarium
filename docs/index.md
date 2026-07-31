@@ -95,13 +95,16 @@ from a fresh checkout to a successful Android build.
 
 ### Look up the project
 
-- [Project structure](project-structure.md) maps modules and source sets.
+- [Module and source-set reference](module-reference.md) maps modules, source
+  sets, and placement rules.
 - [Testing strategy](testing.md) describes test layers, gates, and coverage.
 
 ### Understand the design
 
 - [Architecture overview](architecture.md) explains the system and its
   boundaries.
+- [Why source paths are deep](project-structure.md) explains the combined
+  Gradle, Kotlin Multiplatform, and JVM package layout.
 - [Plan, confirm, execute](decisions/0002-plan-confirm-execute.md) explains why
   planning cannot save data.
 - [Deterministic inspection planning](decisions/0006-deterministic-inspection-planning.md)

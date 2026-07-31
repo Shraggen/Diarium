@@ -74,5 +74,5 @@ emulator, then choose **Run**. Android Studio selects the APK that matches the
 target device.
 
 Next, read [how to verify a change](verifying-changes.md) before modifying the
-project, or use the [project structure](project-structure.md) to find the
-module that owns the behaviour you want to change.
+project, or use the [module and source-set reference](module-reference.md) to
+find the module that owns the behaviour you want to change.

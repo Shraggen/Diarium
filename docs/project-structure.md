@@ -1,4 +1,10 @@
-# Project structure
+# Why source paths are deep
+
+Diarium's source paths look repetitive because Gradle modules, Kotlin
+Multiplatform source sets, source languages, JVM packages, and feature names
+all express different kinds of structure. Keeping those layers visible makes
+platform and dependency boundaries easier to recognise, even though it adds
+directory depth.
 
 The directory depth in this repository comes from several independent naming
 systems being written into one path. For example:
@@ -9,9 +15,9 @@ app/sharedLogic/src/commonMain/kotlin/com/shraggen/diarium/speech/Transcript.kt
 module  Gradle  KMP  language package        feature
 ```
 
-## Which parts are required?
+## Each layer answers a different question
 
-- `app/sharedLogic` is our Gradle module organization. We chose it.
+- `app/sharedLogic` identifies the Gradle module and its dependency boundary.
 - `src/commonMain` is the conventional Kotlin Multiplatform source-set layout.
   Gradle can be reconfigured, but keeping the convention makes builds and IDEs
   easier to understand.
@@ -19,12 +25,11 @@ module  Gradle  KMP  language package        feature
 - `com/shraggen/diarium` mirrors the package declaration
   `package com.shraggen.diarium`. Kotlin does not technically require the
   directory to match, but JVM/Android tools and developers strongly expect it.
-- `speech` is useful project organization by feature.
+- `speech` groups the code by feature within that package.
 
-So the frustration is fair: KMP contributes meaningful platform/source-set
-structure, while JVM reverse-domain packages add several repetitive folders.
-The combination is substantially noisier than Go or a modern SDK-style .NET
-project.
+Kotlin Multiplatform contributes meaningful platform and source-set structure,
+while JVM reverse-domain packages add repetitive namespace folders. The
+combination is deeper than the layouts used by languages without both concepts.
 
 ## Why keep the reverse-domain package?
 
@@ -37,53 +42,22 @@ saved or reflected type names while delivering little runtime or maintenance
 value.
 
 The Android application ID and Kotlin package can technically differ, and
-Kotlin permits a short package such as `diarium`. That is a reasonable
-greenfield choice for a private project, but changing this repository now is
-not recommended.
+Kotlin permits a short package such as `diarium`. That can be effective in a
+greenfield private project. In Diarium, however, the migration cost and
+compatibility risk outweigh the small navigation benefit.
 
-## How we keep it manageable
+## Boundaries make the depth useful
 
-1. Treat `com.shraggen.diarium` as an invisible base namespace.
-2. Organize code by feature below it: `speech`, `beekeeping`, `persistence`,
-   `tool`, and `schema`.
-3. Add a new Gradle module only for a real dependency or deployment boundary,
-   not merely to sort files.
-4. Keep platform code in its platform source set; keep portable behavior in
-   `commonMain`.
-5. Keep tests in the matching source set and package whenever practical.
-6. Use the IDE's compact/flatten package display when browsing packages.
+The directory layers expose decisions that the build enforces. A module shows
+dependency direction. A source set shows which platforms can compile a file. A
+package gives types a stable namespace. A feature name groups related domain or
+technical concepts.
 
-## Current module map
+That distinction prevents Android frameworks and persistence implementations
+from leaking into portable domain code. It also lets tests target the same
+platform scope as the behaviour they protect. The repeated base package carries
+less architectural meaning; IDE package compaction can hide it without changing
+the source layout.
 
-```mermaid
-flowchart LR
-    Android["app/androidApp<br/>Android host and adapters"]
-    SharedUI["app/sharedUI<br/>Compose UI"]
-    SharedLogic["app/sharedLogic<br/>Domain and portable logic"]
-    Core["core<br/>Kernel and tool contracts"]
-    IOS["app/iosApp<br/>iOS host"]
-    AndroidNative["Audio, Whisper, Silero, Room"]
-
-    Android --> SharedUI
-    Android --> AndroidNative
-    SharedUI --> SharedLogic
-    IOS --> SharedLogic
-    SharedLogic --> Core
-```
-
-Arrows point from a consumer to the module or platform facilities it depends
-on. The shared dependency chain terminates at the domain-neutral `core`;
-Android-native facilities do not leak back into shared modules.
-
-| Module | Purpose |
-| --- | --- |
-| `core` | Domain-neutral schemas, tools, parser, executor, and kernel. |
-| `app/sharedLogic` | Beekeeping domain, controller composition, and portable speech logic. |
-| `app/sharedUI` | Shared Compose UI and localization. |
-| `app/androidApp` | Android host, native runtimes, coordinators, and Room. |
-| `app/iosApp` | iOS host consuming the shared KMP framework. |
-
-This is a compromise rather than an endorsement of every JVM convention. The
-source-set directories communicate real KMP behavior; the reverse-domain path
-mostly communicates namespace. IDE presentation should hide the latter when
-possible.
+For exact module responsibilities, source sets, and placement rules, see the
+[module and source-set reference](module-reference.md).

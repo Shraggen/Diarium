@@ -51,7 +51,7 @@ Choose the page that matches what you need:
 | --- | --- |
 | Learn the build on one reliable path | [Build your first Diarium APK](docs/getting-started.md) |
 | Validate work before opening a pull request | [How to verify a change](docs/verifying-changes.md) |
-| Find the module that owns some behaviour | [Project structure](docs/project-structure.md) |
+| Find the module that owns some behaviour | [Module and source-set reference](docs/module-reference.md) |
 | Understand the safety and platform boundaries | [Architecture overview](docs/architecture.md) |
 | Understand the test layers and their purpose | [Testing strategy](docs/testing.md) |
 | Prepare a GitHub release | [Release process](docs/releasing.md) |

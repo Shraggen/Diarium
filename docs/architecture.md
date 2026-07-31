@@ -67,8 +67,8 @@ current milestone.
 | German and Serbian are release requirements | Multilingual Whisper models are mandatory; `.en`-only models are unsuitable. |
 | Speech-model files are too large for the repository | Whisper models are imported at runtime and CI uses optional provisioned models. |
 
-The package and source-set directory conventions are explained in
-[Project structure](project-structure.md).
+The reasons behind the package and source-set directory conventions are
+explained in [Why source paths are deep](project-structure.md).
 
 ## 3. Context and scope
 
@@ -341,9 +341,9 @@ initialization. See [Testing](testing.md).
 ### Source organization
 
 KMP source-set folders, Kotlin package namespaces, and feature folders form
-separate axes. The apparent nesting is explained in
-[Project structure](project-structure.md); new code should remain organized by
-feature below the stable `com.shraggen.diarium` base package.
+separate axes. The [module and source-set reference](module-reference.md)
+describes placement rules; [Why source paths are deep](project-structure.md)
+explains the apparent nesting.
 
 ## 9. Architecture decisions
 

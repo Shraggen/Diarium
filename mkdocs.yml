@@ -71,7 +71,9 @@ nav:
       - Mobile reliability plan: plans/mobile-reliability-and-reprocessing.md
   - Architecture:
       - Overview: architecture.md
-      - Project structure: project-structure.md
+      - Why source paths are deep: project-structure.md
+      - Reference:
+          - Modules and source sets: module-reference.md
       - Decisions:
           - Microkernel tools: decisions/0001-microkernel-tool-contracts.md
           - Plan, confirm, execute: decisions/0002-plan-confirm-execute.md
