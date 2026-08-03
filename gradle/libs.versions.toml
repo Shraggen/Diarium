@@ -22,7 +22,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-orchestrator = "1.6.1"
 junit4 = "4.13.2"
 kotest = "6.2.3"
-cyclonedx = "3.2.4"
+cyclonedx = "3.3.0"
 
 [libraries]
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
