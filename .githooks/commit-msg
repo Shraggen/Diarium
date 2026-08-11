@@ -1,0 +1,21 @@
+#!/bin/sh
+# .githooks/commit-msg
+
+commit_msg_file=$1
+commit_msg=$(cat "$commit_msg_file")
+
+# Standard Conventional Commits regex pattern
+pattern="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-z0-9_ -]+\))?!?: .+"
+
+if ! echo "$commit_msg" | grep -qE "$pattern"; then
+  echo "❌ Error: Invalid commit message format!"
+  echo ""
+  echo "Commit messages must follow the Conventional Commits specification:"
+  echo "  <type>(<scope>): <subject>"
+  echo ""
+  echo "Examples:"
+  echo "  feat(auth): add login with Google"
+  echo "  fix: resolve null pointer in user profile"
+  echo "  docs: update API documentation"
+  exit 1
+fi

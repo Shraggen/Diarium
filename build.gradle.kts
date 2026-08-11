@@ -1,6 +1,4 @@
 plugins {
-    // this is necessary to avoid the plugins to be loaded multiple times
-    // in each subproject's classloader
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidMultiplatformLibrary) apply false
     alias(libs.plugins.composeMultiplatform) apply false
@@ -17,5 +15,25 @@ plugins {
 allprojects {
     dependencyLocking {
         lockAllConfigurations()
+    }
+}
+
+val installGitHooks = tasks.register<Exec>("installGitHooks") {
+    group = "development"
+    description = "Configures git hooks path to .githooks"
+
+    val isWindows = org.gradle.internal.os.OperatingSystem.current().isWindows
+    if (isWindows) {
+        commandLine("cmd", "/c", "git config core.hooksPath .githooks")
+    } else {
+        commandLine("git", "config", "core.hooksPath", ".githooks")
+    }
+}
+
+gradle.projectsEvaluated {
+    subprojects {
+        tasks.matching { it.name == "build" || it.name == "preBuild" }.configureEach {
+            dependsOn(installGitHooks)
+        }
     }
 }

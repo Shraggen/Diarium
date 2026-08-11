@@ -1,32 +1,59 @@
+build:
+  maxIssues: 0
+  excludeCorrectable: false
+
 complexity:
   active: true
   CyclomaticComplexMethod:
     active: true
     threshold: 10
-    ignoreSingleWhenExpression: false
+    ignoreSingleWhenExpression: true # Set to true to avoid flagging clean Kotlin 'when' routing
   LargeClass:
     active: true
     threshold: 150
   CognitiveComplexMethod:
     active: true
     threshold: 15
+  TooManyFunctions:
+    active: true
+    thresholdInFiles: 20
+    thresholdInClasses: 20
+    thresholdInInterfaces: 20
+    thresholdInObjects: 20
+    thresholdInEnums: 20
+    excludes: ['**/test/**', '**/androidTest/**', '**/iosTest/**', '**/desktopTest/**', '**/wasmJsTest/**']
 
 potential-bugs:
   active: true
   UnsafeCast:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**']
+    excludes: ['**/test/**', '**/androidTest/**', '**/iosTest/**', '**/desktopTest/**', '**/wasmJsTest/**']
+  NullableToStringCall:
+    active: true # Catches accidental "null" string representations in shared logic
+
+coroutines:
+  active: true
+  GlobalCoroutineUsage:
+    active: true # Discourages GlobalScope usage across KMP targets
+  RedundantSuspendModifier:
+    active: true
 
 performance:
   active: true
   SpreadOperator:
+    active: true
+  UnnecessaryTemporaryInstantiation:
     active: true
 
 style:
   active: true
   UnusedImports:
     active: true
-  # Exclude test files from strict styling
   MagicNumber:
     active: true
-    excludes: ['**/test/**', '**/androidTest/**', '**/iosTest/**']
+    ignoreNumbers: ['-1', '0', '1', '2']
+    ignorePropertyDeclaration: true
+    excludes: ['**/test/**', '**/androidTest/**', '**/iosTest/**', '**/desktopTest/**', '**/wasmJsTest/**']
+  UnusedPrivateMember:
+    active: true
+    allowedNames: '(_|ignored|expected)' # KMP-friendly pattern for expected/actual placeholders
