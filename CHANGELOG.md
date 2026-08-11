@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/Shraggen/Diarium/compare/v0.2.4...v0.2.5) (2026-08-11)
+
+
+### Bug Fixes
+
+* added conventional commit tooling and enhanced the detekt config ([deea224](https://github.com/Shraggen/Diarium/commit/deea224b17ddd34575bf2fa4bca02e27a3f6ef44))
+
 ## [0.2.4](https://github.com/Shraggen/Diarium/compare/v0.2.3...v0.2.4) (2026-07-26)
 
 
