@@ -96,19 +96,6 @@ jobs:
           build-mode: ${{ matrix.build-mode }}
           tools: linked
 
-      # hopefully this caching strat improves ci time
-      - name: Cache Gradle & Konan (Swift job)
-        if: matrix.language == 'swift'
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-            ~/.konan
-          key: ${{ runner.os }}-konan-gradle-${{ hashFiles('**/*.gradle.kts', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-konan-gradle-
-
       # 3. Compile Step
       - name: Run manual build steps
         if: matrix.build-mode == 'manual'
