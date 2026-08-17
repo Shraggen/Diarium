@@ -1,0 +1,27 @@
+name: Calculate DevOps Metrics
+
+on:
+  schedule:
+    - cron: "30 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-metrics:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      deployments: read
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: DevOps Metrics from GitHub
+        uses: stenjo/devops-metrics-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Check stenjo/devops-metrics-action documentation for extra options, e.g.:
+          # production-branch: 'main'
+          # output-file: 'metrics.json'
