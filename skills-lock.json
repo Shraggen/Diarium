@@ -1,11 +1,35 @@
 {
   "version": 1,
   "skills": {
+    "android-clean-architecture": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/android-clean-architecture/SKILL.md",
+      "computedHash": "80779b595f194a1ca3d59e36cbf4b29f426faaf90cf9c41dfd61a80442214890"
+    },
+    "android-jetpack-compose": {
+      "source": "thebushidocollective/han",
+      "sourceType": "github",
+      "skillPath": "plugins/specialized/android/skills/jetpack-compose/SKILL.md",
+      "computedHash": "7c17e8d8ecfc7159fa18a4359cc0e53868134b6bfd28e825b5c5473d52987853"
+    },
     "find-skills": {
       "source": "vercel-labs/skills",
       "sourceType": "github",
       "skillPath": "skills/find-skills/SKILL.md",
       "computedHash": "b146008599c31057cef1c145774cea5d5afb30e8f43fa802e47a4b461419aaaf"
+    },
+    "kotlin-coroutines-flows": {
+      "source": "affaan-m/ecc",
+      "sourceType": "github",
+      "skillPath": "skills/kotlin-coroutines-flows/SKILL.md",
+      "computedHash": "54bcdc709902f6befca567861a1e3ce7effa0214f9862cf9e492dc30c583e905"
+    },
+    "kotlin-multiplatform": {
+      "source": "vitorpamplona/amethyst",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/kotlin-multiplatform/SKILL.md",
+      "computedHash": "8dbe00dd4523ca771558c35ed3c9c88f737fa100ae43fbd5dfaf4d0903a7790a"
     },
     "writing-documentation-with-diataxis": {
       "source": "sammcj/agentic-coding",
