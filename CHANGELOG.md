@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/Shraggen/Diarium/compare/v0.2.5...v0.2.6) (2026-08-20)
+
+
+### Bug Fixes
+
+* dependency lock generated to fix the ci ([ec1a4bd](https://github.com/Shraggen/Diarium/commit/ec1a4bde79e81d5d0628d42dd6a77f5ed630a209))
+
 ## [0.2.5](https://github.com/Shraggen/Diarium/compare/v0.2.4...v0.2.5) (2026-08-11)
 
 
