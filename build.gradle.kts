@@ -44,7 +44,3 @@ dependencies {
     detektPlugins(libs.detekt.formatting)
     detektPlugins(libs.detekt.rules.compose)
 }
-
-tasks.withType<Detekt>().configureEach {
-    requiresTypeResolution = true
-}
