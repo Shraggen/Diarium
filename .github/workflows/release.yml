@@ -57,14 +57,17 @@ jobs:
     timeout-minutes: 40
 
     permissions:
+      actions: read
       contents: write
       id-token: write
+      pull-requests: read
       attestations: write
       artifact-metadata: write
 
     env:
       RELEASE_TAG: ${{ needs.release-please.outputs.tag_name }}
       RELEASE_VERSION: ${{ needs.release-please.outputs.version }}
+      RELEASE_SHA: ${{ needs.release-please.outputs.sha }}
       ANDROID_SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}
       ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
       ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
@@ -88,7 +91,7 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
-      - name: Validate release metadata and signing secrets
+      - name: Validate release metadata
         shell: bash
         run: |
           repository_version="$(tr -d '\r\n' < version.txt)"
@@ -97,30 +100,60 @@ jobs:
             exit 1
           fi
 
-          required_values=(
-            "$ANDROID_SIGNING_KEY_BASE64"
-            "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD"
-            "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS"
-            "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD"
-          )
-          for value in "${required_values[@]}"; do
-            if [ -z "$value" ]; then
-              echo "Android release signing secrets are incomplete."
-              exit 1
-            fi
-          done
-
-      - name: Restore Android release keystore
+      # Build once, promote: reuse the signed APKs that CI built and verified on
+      # the release PR when they were built from exactly the tagged source tree.
+      - name: Promote release candidate from the release PR
+        id: candidate
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          keystore_path="$RUNNER_TEMP/diarium-release.jks"
-          printf '%s' "$ANDROID_SIGNING_KEY_BASE64" \
-            | base64 --decode \
-            > "$keystore_path"
-          echo "ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE=$keystore_path" \
-            >> "$GITHUB_ENV"
+          rebuild() {
+            echo "$1 Rebuilding from the tagged commit."
+            echo "promoted=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          }
+
+          pr_head_sha="$(
+            gh api "repos/$GITHUB_REPOSITORY/commits/$RELEASE_SHA/pulls" \
+              --jq '[.[] | select(.head.ref | startswith("release-please--"))][0].head.sha // empty' \
+              || true
+          )"
+          [ -n "$pr_head_sha" ] || rebuild "No release PR is associated with $RELEASE_SHA."
+
+          run_id="$(
+            gh run list \
+              --workflow ci.yml \
+              --event pull_request \
+              --commit "$pr_head_sha" \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId // empty' \
+              || true
+          )"
+          [ -n "$run_id" ] || rebuild "No successful CI run exists for release PR head $pr_head_sha."
+
+          candidate_dir="$RUNNER_TEMP/release-candidate"
+          gh run download "$run_id" --name release-candidate-apks --dir "$candidate_dir" \
+            || rebuild "CI run $run_id has no release candidate artifact."
+
+          candidate_tree="$(tr -d '\r\n' < "$candidate_dir/candidate-tree.txt")"
+          release_tree="$(git rev-parse "$RELEASE_SHA^{tree}")"
+          [ "$candidate_tree" = "$release_tree" ] \
+            || rebuild "Candidate tree $candidate_tree differs from tagged tree $release_tree."
+
+          mkdir -p app/androidApp/build/outputs/apk/release
+          mv "$candidate_dir"/*.apk app/androidApp/build/outputs/apk/release/
+          echo "Promoting APKs from CI run $run_id (tree $release_tree)."
+          echo "promoted=true" >> "$GITHUB_OUTPUT"
+
+      - name: Restore and verify signing key
+        if: steps.candidate.outputs.promoted != 'true'
+        uses: ./.github/actions/restore-android-signing-key
 
       - name: Verify and build released commit
+        if: steps.candidate.outputs.promoted != 'true'
         run: >-
           ./gradlew
           detekt
@@ -132,42 +165,10 @@ jobs:
           --stacktrace
           --no-daemon
 
-      - name: Verify Android release signing key
-        shell: bash
-        run: |
-          csr_path="$RUNNER_TEMP/diarium-signing-check.csr"
-
-          if ! keytool -certreq \
-            -keystore "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE" \
-            -storepass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD \
-            -alias "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS" \
-            -keypass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD \
-            -file "$csr_path" \
-            >/dev/null; then
-            echo "::error::Android signing validation failed. Check the encoded keystore, keystore password, key alias, and key password."
-            exit 1
-          fi
-
-          rm -f "$csr_path"
-          echo "Android release signing key validated."
-
       - name: Verify APK signatures
-        shell: bash
-        run: |
-          apksigner_path="$(
-            find "$ANDROID_HOME/build-tools" -type f -name apksigner \
-              | sort -V \
-              | tail -n 1
-          )"
-          if [ -z "$apksigner_path" ]; then
-            echo "apksigner was not found in the Android SDK."
-            exit 1
-          fi
-
-          for apk in app/androidApp/build/outputs/apk/release/*.apk; do
-            echo "Verifying $apk..."
-            "$apksigner_path" verify --verbose --print-certs "$apk"
-          done
+        uses: ./.github/actions/verify-apk-signatures
+        with:
+          apk-dir: app/androidApp/build/outputs/apk/release
 
       - name: Prepare release assets
         shell: bash

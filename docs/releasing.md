@@ -12,10 +12,11 @@ flowchart TD
     PRGate -->|"no"| Change
     PRGate -->|"yes; squash merge"| Main["main"]
     Main --> RP["Release Please updates release PR"]
-    RP --> Ready{"Trunk ready to ship?"}
+    RP --> Candidate["CI builds, lints, and signs<br/>the release candidate APK"]
+    Candidate --> Ready{"Candidate green and<br/>trunk ready to ship?"}
     Ready -->|"not yet"| Main
     Ready -->|"merge release PR"| Draft["Immutable version tag<br/>and draft GitHub Release"]
-    Draft --> ReleaseGate{"Tests, lint, signing,<br/>build, and checksum pass?"}
+    Draft --> ReleaseGate{"Candidate promoted (or rebuilt)<br/>and signatures verify?"}
     ReleaseGate -->|"no"| KeepDraft["Keep release as draft"]
     ReleaseGate -->|"yes"| Publish["Publish release with signed APK<br/>and SHA-256 checksum"]
 ```
@@ -23,14 +24,25 @@ flowchart TD
 1. Merge normal pull requests into `main` using squash merge.
 2. Release Please reads the squash-merge titles and maintains one release pull
    request containing the next version and generated changelog.
-3. Review and merge that pull request when the current trunk is ready to ship.
-4. Release Please creates an immutable `vMAJOR.MINOR.PATCH` tag and a draft
+3. CI on the release pull request runs the normal quality gate and additionally
+   builds, lints, and signs the release APK (`Signed Android release candidate`).
+   Signing, release lint, and minification problems therefore surface while the
+   release is still only a pull request.
+4. Review and merge that pull request once its checks are green and the current
+   trunk is ready to ship.
+5. Release Please creates an immutable `vMAJOR.MINOR.PATCH` tag and a draft
    GitHub Release.
-5. The release workflow checks out that exact commit, reruns the non-device
-   quality gate, builds and verifies a signed APK, attaches the APK and SHA-256
-   checksum, and publishes the draft.
-6. If signing, tests, lint, or compilation fail, the GitHub Release remains a
-   draft.
+6. The release workflow promotes the APKs built on the release pull request when
+   they were built from exactly the tagged source tree (build once, promote). If
+   no matching candidate exists, for example because `main` moved before the
+   release pull request was refreshed, it falls back to rerunning the non-device
+   quality gate and rebuilding from the tag.
+7. It verifies the APK signatures, attaches the APKs and SHA-256 checksums, and
+   publishes the draft. If any step fails, the GitHub Release remains a draft.
+
+The `Android Signing Key Check` workflow proves every Monday that the signing
+secrets still unlock the keystore, so a broken or rotated secret is noticed
+before a release depends on it. Run it manually after changing signing secrets.
 
 `version.txt` is the source of truth for the user-visible Android version.
 Gradle derives the monotonically increasing Android `versionCode` as:

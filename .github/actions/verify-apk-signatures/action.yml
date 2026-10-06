@@ -1,0 +1,37 @@
+name: Verify APK signatures
+description: Runs apksigner from the newest installed Android build-tools against every APK in a directory.
+
+inputs:
+  apk-dir:
+    description: Directory containing the APKs to verify.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Verify APK signatures
+      shell: bash
+      env:
+        APK_DIR: ${{ inputs.apk-dir }}
+      run: |
+        apksigner_path="$(
+          find "$ANDROID_HOME/build-tools" -type f -name apksigner \
+            | sort -V \
+            | tail -n 1
+        )"
+        if [ -z "$apksigner_path" ]; then
+          echo "apksigner was not found in the Android SDK."
+          exit 1
+        fi
+
+        shopt -s nullglob
+        apks=("$APK_DIR"/*.apk)
+        if [ "${#apks[@]}" -eq 0 ]; then
+          echo "::error::No APKs found in $APK_DIR."
+          exit 1
+        fi
+
+        for apk in "${apks[@]}"; do
+          echo "Verifying $apk..."
+          "$apksigner_path" verify --verbose --print-certs "$apk"
+        done
