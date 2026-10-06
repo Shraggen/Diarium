@@ -9,5 +9,11 @@ updates:
     directory: "/" # Location of package manifests
     schedule:
       interval: "weekly"
+    # `fix(deps):` titles are releasable, so Release Please queues a patch release
+    # for runtime dependency updates instead of ignoring them as `chore`. Gradle
+    # does not support a separate prefix for development dependencies.
+    commit-message:
+      prefix: "fix"
+      include: "scope"
     ignore:
       - dependency-name: "org.jetbrains.kotlin*"
