@@ -37,3 +37,12 @@ gradle.projectsEvaluated {
         }
     }
 }
+
+subprojects {
+    pluginManager.withPlugin("io.gitlab.arturbosch.detekt") {
+        dependencies {
+            "detektPlugins"(libs.detekt.formatting)
+            "detektPlugins"(libs.detekt.rules.compose)
+        }
+    }
+}
