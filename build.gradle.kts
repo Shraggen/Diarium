@@ -1,5 +1,3 @@
-import io.gitlab.arturbosch.detekt.Detekt
-
 plugins {
     alias(libs.plugins.androidApplication) apply false
     alias(libs.plugins.androidMultiplatformLibrary) apply false
@@ -8,7 +6,7 @@ plugins {
     alias(libs.plugins.kotlinJvm) apply false
     alias(libs.plugins.kotlinMultiplatform) apply false
     alias(libs.plugins.ktor) apply false
-    alias(libs.plugins.detekt)
+    alias(libs.plugins.detekt) apply false
     alias(libs.plugins.ksp) apply false
     alias(libs.plugins.androidx.room) apply false
     alias(libs.plugins.cyclonedx) apply false
@@ -40,7 +38,11 @@ gradle.projectsEvaluated {
     }
 }
 
-dependencies {
-    detektPlugins(libs.detekt.formatting)
-    detektPlugins(libs.detekt.rules.compose)
+subprojects {
+    pluginManager.withPlugin("io.gitlab.arturbosch.detekt") {
+        dependencies {
+            "detektPlugins"(libs.detekt.formatting)
+            "detektPlugins"(libs.detekt.rules.compose)
+        }
+    }
 }

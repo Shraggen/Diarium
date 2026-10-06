@@ -23,7 +23,6 @@ androidx-test-orchestrator = "1.6.1"
 junit4 = "4.13.2"
 kotest = "6.2.4"
 cyclonedx = "3.4.1"
-detekt-formatting = "1.23.8" 
 detekt-compose = "1.4.0"
 
 [libraries]
@@ -53,7 +52,7 @@ androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.re
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
-detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt-formatting" }
+detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 detekt-rules-compose = { module = "ru.kode:detekt-rules-compose", version.ref = "detekt-compose" }
 
 [plugins]

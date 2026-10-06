@@ -57,6 +57,7 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: '(_|ignored|expected)' # KMP-friendly pattern for expected/actual placeholders
+    ignoreAnnotated: ['Preview'] # Compose previews are private (PublicComposablePreview) and used only by tooling
 
 formatting:
   active: true
