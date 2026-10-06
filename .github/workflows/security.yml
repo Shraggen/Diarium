@@ -12,7 +12,6 @@ on:
 jobs:
   changes:
     name: Detect security-relevant changes
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -20,6 +19,7 @@ jobs:
       pull-requests: read
     outputs:
       source: ${{ steps.filter.outputs.source }}
+      codeql-matrix: ${{ steps.codeql.outputs.matrix }}
 
     steps:
       - name: Checkout repository
@@ -27,6 +27,7 @@ jobs:
 
       - name: Detect security-relevant changes
         id: filter
+        if: github.event_name == 'push' || github.event_name == 'pull_request'
         uses: dorny/paths-filter@v3
         with:
           filters: |
@@ -41,12 +42,30 @@ jobs:
               - 'gradle.properties'
               - 'gradlew'
               - 'gradlew.bat'
+            swift:
+              - 'app/iosApp/**'
+              - '.github/workflows/security.yml'
+
+      # Swift analysis needs a macOS runner, which is slow to schedule. Scan Swift
+      # only when Swift sources change, plus the weekly and manual full scans.
+      - name: Select CodeQL languages
+        id: codeql
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SWIFT_CHANGED: ${{ steps.filter.outputs.swift }}
+        run: |
+          languages='{"language":"actions","build-mode":"none"},{"language":"java-kotlin","build-mode":"manual"}'
+          if [ "$EVENT_NAME" = 'schedule' ] || [ "$EVENT_NAME" = 'workflow_dispatch' ] || [ "$SWIFT_CHANGED" = 'true' ]; then
+            languages="$languages"',{"language":"swift","build-mode":"manual"}'
+          fi
+          echo "matrix={\"include\":[$languages]}" >> "$GITHUB_OUTPUT"
 
   analyze:
     name: Analyze (${{ matrix.language }})
     needs: changes
     if: >-
       always() &&
+      needs.changes.result == 'success' &&
       (github.event_name == 'schedule' ||
       github.event_name == 'workflow_dispatch' ||
       needs.changes.outputs.source == 'true')
@@ -60,14 +79,7 @@ jobs:
 
     strategy:
       fail-fast: false
-      matrix:
-        include:
-          - language: actions
-            build-mode: none
-          - language: java-kotlin
-            build-mode: manual
-          - language: swift
-            build-mode: manual
+      matrix: ${{ fromJSON(needs.changes.outputs.codeql-matrix) }}
 
     steps:
       - name: Checkout repository

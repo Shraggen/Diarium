@@ -22,6 +22,7 @@ jobs:
     outputs:
       android: ${{ steps.filter.outputs.android }}
       ios: ${{ steps.filter.outputs.ios }}
+      ios-app: ${{ steps.filter.outputs.ios-app }}
 
     steps:
       - name: Checkout code
@@ -58,6 +59,9 @@ jobs:
               - 'gradle.properties'
               - 'gradlew'
               - 'gradlew.bat'
+              - '.github/workflows/ci.yml'
+            ios-app:
+              - 'app/iosApp/**'
               - '.github/workflows/ci.yml'
 
   conventional-pr-title:
@@ -262,7 +266,12 @@ jobs:
   ios-build:
     name: Build iOS simulator app
     needs: changes
-    if: needs.changes.outputs.ios == 'true'
+    # macOS runners are slow to schedule. The Linux job already compiles the
+    # shared Kotlin code for iOS, so pull requests only wait for this when the
+    # Swift app changes; every relevant push to main still builds it.
+    if: >-
+      (github.event_name == 'push' && needs.changes.outputs.ios == 'true') ||
+      needs.changes.outputs.ios-app == 'true'
     runs-on: macos-latest
     timeout-minutes: 35
 
