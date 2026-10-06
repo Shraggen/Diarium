@@ -75,7 +75,7 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 @Suppress("FunctionNaming")
-fun AppAndroidPreview() {
+private fun AppAndroidPreview() {
     App(
         state = DiariumUiState(
             userInput = "I inspected hive 4 and saw the queen.",
