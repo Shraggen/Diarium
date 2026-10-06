@@ -32,8 +32,12 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
 
+      # `dependencies` is a per-project help task, so it must be invoked on every
+      # project explicitly or only the root and settings lockfiles get rewritten.
       - name: Generate Gradle Lockfiles
-        run: ./gradlew dependencies --write-locks
+        run: |
+          mapfile -t projects < <(./gradlew -q projects | sed -nE "s/^project '([^']+)'.*/\1/p")
+          ./gradlew dependencies "${projects[@]/%/:dependencies}" --write-locks
 
       - name: Commit and push changes
         run: |
