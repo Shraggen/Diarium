@@ -57,3 +57,22 @@ style:
   UnusedPrivateMember:
     active: true
     allowedNames: '(_|ignored|expected)' # KMP-friendly pattern for expected/actual placeholders
+    ignoreAnnotated: ['Preview'] # Compose previews are private (PublicComposablePreview) and used only by tooling
+
+formatting:
+  active: true
+  MaximumLineLength:
+    active: true
+    maxLineLength: 120
+  Indentation:
+    active: true
+    indentSize: 4
+
+compose:
+  active: true
+  ComposableNaming:
+    active: true
+  ModifierReused:
+    active: true
+  ModifierMissing:
+    active: true
