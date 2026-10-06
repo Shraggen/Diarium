@@ -1,0 +1,35 @@
+name: Android Signing Key Check
+
+# Releases are rare, so a rotated or broken signing secret would otherwise only
+# surface when a release is already tagged. This proves the secrets weekly.
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-signing-key:
+    name: Verify Android release signing key
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    env:
+      ANDROID_SIGNING_KEY_BASE64: ${{ secrets.ANDROID_SIGNING_KEY_BASE64 }}
+      ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Restore and verify signing key
+        uses: ./.github/actions/restore-android-signing-key
+
+      - name: Remove restored keystore
+        if: always()
+        shell: bash
+        run: rm -f "${ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE:-}"

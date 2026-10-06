@@ -1,0 +1,58 @@
+name: Restore Android signing key
+description: >-
+  Decodes the release keystore into RUNNER_TEMP, exports its path as
+  ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE, and proves that the store
+  password, key alias, and key password unlock it. Reads the same environment
+  variables the Gradle signing config uses, so callers set them at job level:
+  ANDROID_SIGNING_KEY_BASE64, ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD,
+  ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS and
+  ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD. Callers remove the restored
+  keystore in an `if: always()` step.
+
+runs:
+  using: composite
+  steps:
+    - name: Check signing secrets are present
+      shell: bash
+      run: |
+        required_values=(
+          "$ANDROID_SIGNING_KEY_BASE64"
+          "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD"
+          "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS"
+          "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD"
+        )
+        for value in "${required_values[@]}"; do
+          if [ -z "$value" ]; then
+            echo "::error::Android release signing secrets are incomplete."
+            exit 1
+          fi
+        done
+
+    - name: Restore keystore
+      shell: bash
+      run: |
+        keystore_path="$RUNNER_TEMP/diarium-release.jks"
+        printf '%s' "$ANDROID_SIGNING_KEY_BASE64" \
+          | base64 --decode \
+          > "$keystore_path"
+        echo "ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_FILE=$keystore_path" \
+          >> "$GITHUB_ENV"
+
+    - name: Verify the key unlocks
+      shell: bash
+      run: |
+        csr_path="$RUNNER_TEMP/diarium-signing-check.csr"
+
+        if ! keytool -certreq \
+          -keystore "$RUNNER_TEMP/diarium-release.jks" \
+          -storepass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_STORE_PASSWORD \
+          -alias "$ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_ALIAS" \
+          -keypass:env ORG_GRADLE_PROJECT_DIARIUM_RELEASE_KEY_PASSWORD \
+          -file "$csr_path" \
+          >/dev/null; then
+          echo "::error::Android signing validation failed. Check the encoded keystore, keystore password, key alias, and key password."
+          exit 1
+        fi
+
+        rm -f "$csr_path"
+        echo "Android release signing key validated."
