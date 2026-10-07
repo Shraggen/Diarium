@@ -23,7 +23,7 @@ androidx-test-orchestrator = "1.6.1"
 junit4 = "4.13.2"
 kotest = "6.2.5"
 cyclonedx = "3.4.1"
-detekt-compose = "1.4.0"
+detekt-compose = "2.1.1"
 
 [libraries]
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
