@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.7](https://github.com/Shraggen/Diarium/compare/v0.2.6...v0.2.7) (2026-10-07)
+
+
+### Bug Fixes
+
+* **deps:** bump composeMultiplatform from 1.12.0 to 1.12.1 ([#33](https://github.com/Shraggen/Diarium/issues/33)) ([13d5093](https://github.com/Shraggen/Diarium/commit/13d50937ca5ddc4378a629fb51af77d872cd1585))
+* **deps:** bump gradle-wrapper from 9.7.1 to 9.8.0 ([#35](https://github.com/Shraggen/Diarium/issues/35)) ([5c0e047](https://github.com/Shraggen/Diarium/commit/5c0e047f0a82412c8a92a001d2fb4dc2c5685ae7))
+* **deps:** bump io.ktor.plugin from 3.5.2 to 3.6.0 ([#36](https://github.com/Shraggen/Diarium/issues/36)) ([bf48489](https://github.com/Shraggen/Diarium/commit/bf4848935e491ee2137d4dfae367552d939a7338))
+* **deps:** bump ru.kode:detekt-rules-compose from 1.4.0 to 2.1.1 ([#34](https://github.com/Shraggen/Diarium/issues/34)) ([8ec0afc](https://github.com/Shraggen/Diarium/commit/8ec0afcb296d9b17af9debcc0519d9e3d0fa8886))
+
 ## [0.2.6](https://github.com/Shraggen/Diarium/compare/v0.2.5...v0.2.6) (2026-08-20)
 
 
