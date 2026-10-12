@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.8](https://github.com/Shraggen/Diarium/compare/v0.2.7...v0.2.8) (2026-10-12)
+
+
+### Bug Fixes
+
+* **deps:** bump gradle-wrapper from 9.8.0 to 9.8.1 ([#39](https://github.com/Shraggen/Diarium/issues/39)) ([79dcb7c](https://github.com/Shraggen/Diarium/commit/79dcb7cd79be79d7a23b306c60181273a4c07263))
+* **deps:** bump org.cyclonedx.bom from 3.4.1 to 3.5.0 ([#40](https://github.com/Shraggen/Diarium/issues/40)) ([491001b](https://github.com/Shraggen/Diarium/commit/491001b4824f3efe1e50a0aafc5f3d01bfc34ede))
+* **deps:** bump ru.kode:detekt-rules-compose from 2.1.1 to 2.1.2 ([#41](https://github.com/Shraggen/Diarium/issues/41)) ([8df55dc](https://github.com/Shraggen/Diarium/commit/8df55dc4cb8d9931fd5b430e6becbf3e8cdc81ce))
+
 ## [0.2.7](https://github.com/Shraggen/Diarium/compare/v0.2.6...v0.2.7) (2026-10-07)
 
 
