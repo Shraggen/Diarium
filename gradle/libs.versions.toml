@@ -1,4 +1,7 @@
 [versions]
+# JDK that Gradle provisions for compilation and tests; keep in sync with
+# gradle/gradle-daemon-jvm.properties.
+jdk = "21"
 agp = "9.3.1"
 android-compileSdk = "37"
 android-minSdk = "26"
@@ -22,6 +25,7 @@ androidx-test-runner = "1.7.0"
 androidx-test-orchestrator = "1.6.1"
 junit4 = "4.13.2"
 kotest = "6.2.5"
+pitest = "1.30.0"
 cyclonedx = "3.5.0"
 detekt-compose = "2.1.2"
 
@@ -52,6 +56,7 @@ androidx-test-orchestrator = { module = "androidx.test:orchestrator", version.re
 androidx-room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 junit4 = { module = "junit:junit", version.ref = "junit4" }
 kotest-property = { module = "io.kotest:kotest-property", version.ref = "kotest" }
+pitest-commandLine = { module = "org.pitest:pitest-command-line", version.ref = "pitest" }
 detekt-formatting = { module = "io.gitlab.arturbosch.detekt:detekt-formatting", version.ref = "detekt" }
 detekt-rules-compose = { module = "ru.kode:detekt-rules-compose", version.ref = "detekt-compose" }
 

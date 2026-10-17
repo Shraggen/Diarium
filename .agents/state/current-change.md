@@ -1,13 +1,13 @@
 # Current change
 
-Outcome: Security scans report vulnerabilities in dependencies that can ship in the Android release application, rather than Gradle build and test tooling.
-Owning bounded context: Android runtime and repository security delivery
+Outcome: Contributors build without installing JDK 21, and the test suites are checked by generated properties and by mutation testing.
+Owning bounded context: Build tooling and core tool-contract verification
 Owning team: Shraggen
-Current slice: Completed — generate the Android release runtime SBOM and scan it with Trivy in SBOM mode.
-Acceptance criteria: Met — CycloneDX 3.2.4 generated 165 components from releaseRuntimeClasspath at the deterministic path; tooling and test dependencies, Netty, and Bouncy Castle are absent; representative runtime dependencies are present; CodeQL remains intact; manual and scheduled runs bypass the path filter.
-Files changed: .github/workflows/security.yml, app/androidApp/build.gradle.kts, build.gradle.kts, gradle/libs.versions.toml, .agents/state/current-change.md
-Open risks: Trivy documents that third-party CycloneDX producers may omit Trivy-specific properties, although the generated Maven package URLs and versions are sufficient for standard Java vulnerability matching.
+Current slice: Gradle-provisioned JDK 21 toolchain; core property tests for schema serialization, schema DSL, model tool-call parsing, tool mapping, and tool arguments; report-only Pitest `mutationTest` tasks for `core` and `sharedLogic`; fix for multi-tool prompt indentation found by the mapper property.
+Acceptance criteria: CI passes `:core:jvmTest`, `:app:sharedLogic:allTests`, and the Android build on the provisioned toolchain; the non-blocking CI mutation step publishes Pitest reports for both modules.
+Files changed: gradle.properties, gradle/libs.versions.toml, build.gradle.kts, core/build.gradle.kts, app/*/build.gradle.kts, core and sharedLogic lockfiles, core property tests, LlamatikToolMapper.kt, .github/workflows/ci.yml, docs/getting-started.md, docs/testing.md
+Open risks: Tests were verified only in CI, not locally. Pitest mutates Kotlin bytecode without a Kotlin-aware plugin, so some survivors are compiler-generated noise. The `sharedLogic` mutation run depends on an AGP-internal runtime-classes jar path. `gradlew` still needs some Java 17+ to launch, and the Android SDK root and license acceptance are not automated.
 Required checks: See `.agents/config.env`
-Rollout strategy: The SBOM task remains non-default; the existing security workflow invokes it on qualifying runs.
-Rollback strategy: Revert the SBOM plugin/task configuration and security workflow changes; dependency locking and committed lockfiles remain unchanged.
-Last updated: 2026-07-31
+Rollout strategy: Mutation testing is report-only (`continue-on-error`, no threshold). Promoting a mutation-score threshold to a blocking gate requires explicit approval.
+Rollback strategy: Revert the commits; lockfile additions are confined to test and `pitest` configurations.
+Last updated: 2026-10-17

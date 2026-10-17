@@ -47,9 +47,14 @@ The testing vocabulary is intentionally split by purpose:
 - reusable planner and mutating-tool conformance helpers define contracts that
   future implementations can run without copying every assertion.
 - Kotest property checks generate hundreds of identifier, language, casing,
-  punctuation, whitespace, ambiguity, and unrelated-text combinations. Kotest
-  is used only as a KMP property generator; the existing `kotlin-test` runner
-  remains in place.
+  punctuation, whitespace, ambiguity, and unrelated-text combinations. In
+  `core` they also check that schema serialization states exactly the modelled
+  constraints, that the schema DSL builds what it declares, that the model
+  tool-call parser accepts only a string `tool` with an object `arguments` and
+  rejects everything else with `IllegalArgumentException`, and that typed
+  tool arguments never coerce quoted text into booleans. Kotest is used only
+  as a KMP property generator; the existing `kotlin-test` runner remains in
+  place.
 
 The `.feature` files are not executed through Cucumber-JVM. Their common-Kotlin
 counterparts are the executable gate, which keeps the specification portable
@@ -68,12 +73,30 @@ the smallest meaningful counterexample to the fixed evaluation corpus when it
 represents a real domain rule. Randomly generated cases do not replace the
 owned multilingual corpus or physical microphone acceptance.
 
+## Mutation testing
+
+Pitest measures whether the JVM test suites detect deliberately introduced
+faults. It reuses the classpath of each module's existing JVM test task and
+mutates only that module's production classes:
+
+```bash
+./gradlew :core:mutationTest
+./gradlew :app:sharedLogic:mutationTest
+```
+
+Reports are written to `<module>/build/reports/pitest/index.html`. The
+`sharedLogic` run uses the Android host tests, so it needs an Android SDK.
+Mutation testing is report-only: no mutation-score threshold fails the build.
+A surviving mutant points at behavior that no test pins down; prefer adding a
+property or a named regression example over asserting implementation details.
+
 ## CI gates
 
 The main CI workflow first classifies changed paths. For affected code:
 
 1. Linux runs Detekt, Konsist/core tests, all shared-logic and shared-UI tests,
-   Android lint, and debug app/test APK builds.
+   Android lint, and debug app/test APK builds. It then runs non-blocking
+   mutation testing for `core` and `sharedLogic` and uploads the Pitest reports.
 2. An API 35 x86_64 emulator runs the Room, launch, and native speech
    instrumentation suite under Android Test Orchestrator.
 3. macOS builds the iOS simulator app and its embedded KMP framework.

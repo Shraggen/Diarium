@@ -12,6 +12,8 @@ detekt {
 }
 
 kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()

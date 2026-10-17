@@ -12,6 +12,8 @@ detekt {
 }
 
 kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
+
     iosArm64()
     iosSimulatorArm64()
 
@@ -40,6 +42,8 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.kotest.property)
         }
 
         jvmTest.dependencies {
