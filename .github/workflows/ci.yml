@@ -123,6 +123,15 @@ jobs:
           --stacktrace
           --no-daemon
 
+      - name: Run mutation testing (report-only)
+        continue-on-error: true
+        run: >-
+          ./gradlew
+          :core:mutationTest
+          :app:sharedLogic:mutationTest
+          --stacktrace
+          --no-daemon
+
       - name: Upload test and lint reports
         if: always()
         uses: actions/upload-artifact@v6
@@ -131,6 +140,7 @@ jobs:
           path: |
             **/build/reports/tests/**
             **/build/reports/detekt/**
+            **/build/reports/pitest/**
             app/androidApp/build/reports/lint-results-debug.*
           if-no-files-found: warn
 

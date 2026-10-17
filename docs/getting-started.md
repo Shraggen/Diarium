@@ -8,17 +8,13 @@ will have built the Android app without changing any source files.
 You need:
 
 - Git;
-- JDK 21;
-- Android Studio with Android SDK 37 installed.
+- any Java 17 or newer on `PATH` or in `JAVA_HOME`, used only to start the
+  Gradle wrapper;
+- Android Studio, or an Android SDK location with accepted licenses.
 
-Run:
-
-```bash
-java -version
-```
-
-The output should identify Java 21. If it reports another version, configure
-`JAVA_HOME` for JDK 21 before continuing.
+You do not need to install JDK 21 yourself. On first run, Gradle downloads it
+into `~/.gradle/jdks` for the build daemon (`gradle/gradle-daemon-jvm.properties`)
+and for compilation and tests (`jdk` in `gradle/libs.versions.toml`).
 
 ## Get the source
 
@@ -38,6 +34,12 @@ to finish. Select Android SDK 37 if Android Studio asks which SDK to use.
 
 Android Studio creates a local `local.properties` file that tells Gradle where
 the SDK is installed. The file is machine-specific and is not committed.
+Without Android Studio, set `ANDROID_HOME` to the SDK directory instead.
+
+The build installs missing SDK platforms and build tools on demand
+(`android.builder.sdkDownload=true`). This only works for licenses already
+accepted in that SDK; Android Studio accepts them during setup, or run
+`sdkmanager --licenses` once.
 
 ## Build the debug APK
 

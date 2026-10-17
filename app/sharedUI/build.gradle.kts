@@ -14,6 +14,8 @@ detekt {
 }
 
 kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
+
     
     android {
        namespace = "com.shraggen.diarium.app.sharedUI"

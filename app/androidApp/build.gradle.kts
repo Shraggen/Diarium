@@ -57,6 +57,8 @@ detekt {
 }
 
 kotlin {
+    jvmToolchain(libs.versions.jdk.get().toInt())
+
     compilerOptions {
         jvmTarget = JvmTarget.JVM_11
     }
