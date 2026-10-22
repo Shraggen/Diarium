@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.9](https://github.com/Shraggen/Diarium/compare/v0.2.8...v0.2.9) (2026-10-22)
+
+
+### Bug Fixes
+
+* **deps:** bump com.lemonappdev:konsist from 0.17.3 to 0.18.1 ([#46](https://github.com/Shraggen/Diarium/issues/46)) ([366b6a7](https://github.com/Shraggen/Diarium/commit/366b6a7d990c5bf0f6d995fd75ad14bba3b0aa4d))
+* **deps:** bump composeMultiplatform from 1.12.1 to 1.12.2 ([#45](https://github.com/Shraggen/Diarium/issues/45)) ([c8a4459](https://github.com/Shraggen/Diarium/commit/c8a4459f2eed45cc968d8993b8af200c8ea10b3f))
+* **deps:** bump io.kotest:kotest-property from 6.2.5 to 6.2.6 ([#49](https://github.com/Shraggen/Diarium/issues/49)) ([ee46d22](https://github.com/Shraggen/Diarium/commit/ee46d22934127fb23aec5d3db41cc6541b9a24ea))
+* **deps:** bump org.cyclonedx.bom from 3.5.0 to 3.5.1 ([#48](https://github.com/Shraggen/Diarium/issues/48)) ([cb8a7ec](https://github.com/Shraggen/Diarium/commit/cb8a7ec531b75b5907b30098aca96ac0bc8a1aa2))
+* **deps:** bump org.pitest:pitest-command-line from 1.30.0 to 1.30.1 ([#47](https://github.com/Shraggen/Diarium/issues/47)) ([b53368f](https://github.com/Shraggen/Diarium/commit/b53368fc9dbc11e3f5cf71f95d6d798d373fcee3))
+
 ## [0.2.8](https://github.com/Shraggen/Diarium/compare/v0.2.7...v0.2.8) (2026-10-12)
 
 
