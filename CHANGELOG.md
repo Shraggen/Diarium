@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.10](https://github.com/Shraggen/Diarium/compare/v0.2.9...v0.2.10) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** bump agp from 9.3.1 to 9.4.1 ([#51](https://github.com/Shraggen/Diarium/issues/51)) ([ade157a](https://github.com/Shraggen/Diarium/commit/ade157a138d2a0b4429be4488f1c2e69dc3e9395))
+* **deps:** bump gradle-wrapper from 9.8.1 to 9.8.2 ([#52](https://github.com/Shraggen/Diarium/issues/52)) ([75658ef](https://github.com/Shraggen/Diarium/commit/75658ef7b38bb8a6737de90c6c1af4144b6e302e))
+* **deps:** bump room from 2.8.4 to 2.8.5 ([#53](https://github.com/Shraggen/Diarium/issues/53)) ([32ad69e](https://github.com/Shraggen/Diarium/commit/32ad69eb382a352e45f9dbd05379e8f016f985c7))
+
 ## [0.2.9](https://github.com/Shraggen/Diarium/compare/v0.2.8...v0.2.9) (2026-10-24)
 
 
