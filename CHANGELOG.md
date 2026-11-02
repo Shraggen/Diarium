@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.11](https://github.com/Shraggen/Diarium/compare/v0.2.10...v0.2.11) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** bump agp from 9.4.1 to 9.5.0 ([#55](https://github.com/Shraggen/Diarium/issues/55)) ([609013b](https://github.com/Shraggen/Diarium/commit/609013b03dc1906d24f2ffe1a0e02db5e04c051a))
+
 ## [0.2.10](https://github.com/Shraggen/Diarium/compare/v0.2.9...v0.2.10) (2026-10-27)
 
 
