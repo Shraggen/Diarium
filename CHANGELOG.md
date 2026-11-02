@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.12](https://github.com/Shraggen/Diarium/compare/v0.2.11...v0.2.12) (2026-11-02)
+
+
+### Bug Fixes
+
+* **deps:** bump org.jetbrains.compose.material3:material3 from 1.13.0-alpha01 to 1.13.0-beta01 ([#56](https://github.com/Shraggen/Diarium/issues/56)) ([ea571c7](https://github.com/Shraggen/Diarium/commit/ea571c71bb534195123cbfd8f90ec99480c74688))
+
 ## [0.2.11](https://github.com/Shraggen/Diarium/compare/v0.2.10...v0.2.11) (2026-11-02)
 
 
