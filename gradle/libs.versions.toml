@@ -4,6 +4,7 @@
 jdk = "21"
 agp = "9.4.1"
 android-compileSdk = "37"
+android-compileSdkMinor = "1"
 android-minSdk = "26"
 android-targetSdk = "36"
 androidx-activity = "1.13.0"
