@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Shraggen/Diarium/compare/v0.2.13...v0.3.0) (2026-11-09)
+
+
+### Features
+
+* **eval:** golden-corpus specs and laptop model evals ([#69](https://github.com/Shraggen/Diarium/issues/69)) ([d6e557f](https://github.com/Shraggen/Diarium/commit/d6e557f0209b1580e3b96dcbab1f41692fb91edc))
+
 ## [0.2.13](https://github.com/Shraggen/Diarium/compare/v0.2.12...v0.2.13) (2026-11-09)
 
 
