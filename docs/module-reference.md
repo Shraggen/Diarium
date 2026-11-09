@@ -44,9 +44,9 @@ The canonical boundary declarations are in
 | `core/src/commonMain` | Portable kernel and tool implementation. |
 | `core/src/commonTest` | Portable kernel tests. |
 | `core/src/jvmTest` | JVM-only kernel and architecture tests. |
-| `app/sharedLogic/src/commonMain` | Portable beekeeping and speech logic, and the shared Llamatik command-model and Whisper adapters. |
-| `app/sharedLogic/src/commonTest` | Portable shared-logic tests, the golden voice-note corpus, and acceptance scenarios. |
-| `app/sharedLogic/src/jvmTest` | Desktop-only corpus scoring, model evaluation, and recorded model-output replay. |
+| `app/sharedLogic/src/commonMain` | Portable beekeeping and speech logic, and the shared Llamatik command-model adapter. |
+| `app/sharedLogic/src/commonTest` | Portable shared-logic tests and acceptance scenarios. |
+| `app/sharedLogic/src/androidMain` | Android Llamatik speech transcription implementation. |
 | `app/sharedUI/src/commonMain` | Shared Compose UI and resources. |
 | `app/sharedUI/src/commonTest` | Portable presentation tests. |
 | `app/androidApp/src/main` | Android application, adapters, resources, and manifest. |
