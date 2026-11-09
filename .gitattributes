@@ -1,0 +1,2 @@
+# Golden voice-note recordings for model evaluation (docs/testing.md).
+eval/**/*.wav filter=lfs diff=lfs merge=lfs -text

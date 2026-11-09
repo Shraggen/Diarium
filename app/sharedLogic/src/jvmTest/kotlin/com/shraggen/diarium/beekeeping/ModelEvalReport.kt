@@ -16,20 +16,30 @@ import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
-/** The `<timestamp>.md` and `<timestamp>.json` report of one model evaluation. */
+/**
+ * The `<timestamp>.md` and `<timestamp>.json` report of one model evaluation.
+ *
+ * [referenceRuns] plan from reference transcripts. [speechRuns] are Whisper
+ * transcriptions of the available clips, and [speechPlanRuns] plan from them.
+ */
 class ModelEvalReport(
     private val settings: ModelEvalSettings,
-    private val runs: List<VoiceNoteRun>,
+    private val referenceRuns: List<VoiceNoteRun>,
+    private val speechRuns: List<SpeechRun> = emptyList(),
+    private val speechPlanRuns: List<VoiceNoteRun> = emptyList(),
     private val createdAt: Instant = Instant.now(),
 ) {
-    private val score = CorpusScore.of(runs)
+    private val score = CorpusScore.of(referenceRuns)
     private val modelSha256 = settings.llmModel.sha256()
+    private val whisperSha256 = settings.whisperModel?.takeIf { speechRuns.isNotEmpty() }?.sha256()
 
     fun writeTo(directory: File): List<File> {
         directory.mkdirs()
         val stem = FILE_TIMESTAMP.format(createdAt)
         val markdown = directory.resolve("$stem.md").apply { writeText(markdown()) }
-        val json = directory.resolve("$stem.json").apply { writeText(prettyJson.encodeToString(JsonObject.serializer(), json())) }
+        val json = directory.resolve("$stem.json").apply {
+            writeText(prettyJson.encodeToString(JsonObject.serializer(), json()))
+        }
         return listOf(markdown, json)
     }
 
@@ -48,16 +58,27 @@ class ModelEvalReport(
             put("promptMode", settings.promptMode.name)
             put("sampling", settings.sampling.describe())
         },
-        runs = runs,
+        runs = referenceRuns + speechPlanRuns,
     )
 
-    fun summary(): String =
-        "${settings.llmModel.name}: journal accuracy ${score.journalAccuracy}, " +
-            "false accepts ${score.falseAccepts}, exact calls ${score.exactCall}, " +
-            "latency p50 ${score.latencyP50Millis} ms / p95 ${score.latencyP95Millis} ms"
+    fun summary(): String = buildString {
+        append(
+            "${settings.llmModel.name}: journal accuracy ${score.journalAccuracy}, " +
+                "false accepts ${score.falseAccepts}, exact calls ${score.exactCall}, " +
+                "latency p50 ${score.latencyP50Millis} ms / p95 ${score.latencyP95Millis} ms",
+        )
+        if (speechRuns.isNotEmpty()) {
+            val speech = SpeechScore.of(speechRuns)
+            append(
+                "; ${settings.whisperModel?.name}: WER ${speech.wordErrors}, " +
+                    "real-time factor ${"%.2f".format(speech.realTimeFactor)}, " +
+                    "end-to-end exact calls ${CorpusScore.of(speechPlanRuns).exactCall}",
+            )
+        }
+    }
 
     private fun markdown(): String = buildString {
-        appendLine("# Model evaluation ${createdAt}")
+        appendLine("# Model evaluation $createdAt")
         appendLine()
         appendLine("- Model: `${settings.llmModel.name}`")
         appendLine("- SHA-256: `$modelSha256`")
@@ -68,30 +89,84 @@ class ModelEvalReport(
         appendLine()
         appendLine("## Totals")
         appendLine()
-        appendLine("| Measure | Result |")
-        appendLine("| --- | --- |")
-        totals().forEach { (measure, result) -> appendLine("| $measure | $result |") }
+        table(listOf("Measure", "Result"), totals(score).map { (measure, result) -> listOf(measure, result) })
         appendLine()
         appendLine("## Voice notes")
         appendLine()
-        appendLine("| # | Voice note | Reference transcript | Raw model output | Parsed call | Outcome | Verdict | Latency |")
-        appendLine("| --- | --- | --- | --- | --- | --- | --- | --- |")
-        runs.forEach { run ->
-            val cells = listOf(
+        planTable(referenceRuns)
+        if (speechRuns.isNotEmpty()) speechMarkdown()
+    }
+
+    private fun StringBuilder.speechMarkdown() {
+        val speech = SpeechScore.of(speechRuns)
+        appendLine()
+        appendLine("## Speech recognition")
+        appendLine()
+        appendLine("- Whisper model: `${settings.whisperModel?.name}`")
+        appendLine("- SHA-256: `$whisperSha256`")
+        appendLine("- Clips: ${speechRuns.size} of ${goldenCorpus.size} voice notes")
+        appendLine("- Word error rate: ${speech.wordErrors}")
+        appendLine("- Real-time factor: ${"%.2f".format(speech.realTimeFactor)} (processing time ÷ audio length)")
+        appendLine()
+        appendLine("### Planning from reference and Whisper transcripts (notes with clips)")
+        appendLine()
+        val reference = totals(CorpusScore.of(referenceRunsWithClips()))
+        val whisper = totals(CorpusScore.of(speechPlanRuns))
+        table(
+            listOf("Measure", "Reference transcripts", "Whisper transcripts"),
+            reference.zip(whisper) { (measure, ref), (_, spoken) -> listOf(measure, ref, spoken) },
+        )
+        appendLine()
+        appendLine("### Clips")
+        appendLine()
+        table(
+            listOf("Voice note", "Reference transcript", "Whisper transcript", "WER", "Audio", "Processing", "RTF"),
+            speechRuns.map { run ->
+                listOf(
+                    run.note.name,
+                    run.note.transcript,
+                    run.transcript,
+                    run.wordErrors.toString(),
+                    "${run.audioMillis} ms",
+                    "${run.processingMillis} ms",
+                    "%.2f".format(run.realTimeFactor),
+                )
+            },
+        )
+        appendLine()
+        appendLine("### Planning from Whisper transcripts")
+        appendLine()
+        planTable(speechPlanRuns)
+    }
+
+    private fun StringBuilder.planTable(runs: List<VoiceNoteRun>) = table(
+        listOf("#", "Voice note", "Transcript", "Raw model output", "Parsed call", "Outcome", "Verdict", "Latency"),
+        runs.map { run ->
+            listOf(
                 run.repeat.toString(),
                 run.note.name,
-                run.note.transcript,
+                run.transcript,
                 "`${run.rawOutput}`",
                 run.parsedCall(),
                 run.proposal.outcome.toString(),
                 run.verdict.name,
                 "${run.latencyMillis} ms",
             )
-            appendLine(cells.joinToString(" | ", "| ", " |") { it.asTableCell() })
-        }
+        },
+    )
+
+    private fun StringBuilder.table(header: List<String>, rows: List<List<String>>) {
+        appendLine(header.joinToString(" | ", "| ", " |"))
+        appendLine(header.joinToString(" | ", "| ", " |") { "---" })
+        rows.forEach { row -> appendLine(row.joinToString(" | ", "| ", " |") { it.asTableCell() }) }
     }
 
-    private fun totals(): List<Pair<String, String>> = listOf(
+    private fun referenceRunsWithClips(): List<VoiceNoteRun> {
+        val notesWithClips = speechRuns.map { it.note }.toSet()
+        return referenceRuns.filter { it.note in notesWithClips }
+    }
+
+    private fun totals(score: CorpusScore): List<Pair<String, String>> = listOf(
         "Journal accuracy (expected outcome reached)" to score.journalAccuracy.toString(),
         "False accepts (safety-critical)" to score.falseAccepts.toString(),
         "Valid JSON" to score.validJson.toString(),
@@ -115,24 +190,44 @@ class ModelEvalReport(
         putJsonObject("sampling") { putSampling() }
         put("repeats", settings.repeats)
         put("host", host())
-        putJsonObject("totals") {
-            totals().forEach { (measure, result) -> put(measure, result) }
+        putJsonObject("totals") { putTotals(score) }
+        putJsonArray("voiceNotes") { referenceRuns.forEach { add(it.toJson()) } }
+        if (speechRuns.isNotEmpty()) {
+            putJsonObject("speech") { putSpeech() }
         }
-        putJsonArray("voiceNotes") {
-            runs.forEach { run ->
+    }
+
+    private fun JsonObjectBuilder.putSpeech() {
+        val speech = SpeechScore.of(speechRuns)
+        putJsonObject("whisperModel") {
+            put("file", settings.whisperModel?.name)
+            put("sha256", whisperSha256)
+        }
+        put("wordErrorRate", speech.wordErrors.toString())
+        put("wordErrors", speech.wordErrors.errors)
+        put("referenceWords", speech.wordErrors.referenceWords)
+        put("realTimeFactor", speech.realTimeFactor)
+        putJsonObject("referenceTranscriptTotals") { putTotals(CorpusScore.of(referenceRunsWithClips())) }
+        putJsonObject("whisperTranscriptTotals") { putTotals(CorpusScore.of(speechPlanRuns)) }
+        putJsonArray("clips") {
+            speechRuns.forEach { run ->
                 addJsonObject {
-                    put("repeat", run.repeat)
                     put("name", run.note.name)
                     put("referenceTranscript", run.note.transcript)
-                    put("expectedInspection", run.note.expectedInspection.toString())
-                    put("rawModelOutput", run.rawOutput)
-                    put("parsedCall", run.parsedCall())
-                    put("outcome", run.proposal.outcome.toString())
-                    put("verdict", run.verdict.name)
-                    put("latencyMillis", run.latencyMillis)
+                    put("whisperTranscript", run.transcript)
+                    put("wordErrors", run.wordErrors.errors)
+                    put("referenceWords", run.wordErrors.referenceWords)
+                    put("audioMillis", run.audioMillis)
+                    put("processingMillis", run.processingMillis)
+                    put("realTimeFactor", run.realTimeFactor)
                 }
             }
         }
+        putJsonArray("voiceNotes") { speechPlanRuns.forEach { add(it.toJson()) } }
+    }
+
+    private fun JsonObjectBuilder.putTotals(score: CorpusScore) {
+        totals(score).forEach { (measure, result) -> put(measure, result) }
     }
 
     private fun JsonObjectBuilder.putSampling() {
@@ -158,6 +253,19 @@ class ModelEvalReport(
             DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneOffset.UTC)
         val prettyJson = Json { prettyPrint = true }
     }
+}
+
+private fun VoiceNoteRun.toJson(): JsonObject = buildJsonObject {
+    put("repeat", repeat)
+    put("name", note.name)
+    put("referenceTranscript", note.transcript)
+    put("plannedTranscript", transcript)
+    put("expectedInspection", note.expectedInspection.toString())
+    put("rawModelOutput", rawOutput)
+    put("parsedCall", parsedCall())
+    put("outcome", proposal.outcome.toString())
+    put("verdict", verdict.name)
+    put("latencyMillis", latencyMillis)
 }
 
 private fun VoiceNoteRun.parsedCall(): String =

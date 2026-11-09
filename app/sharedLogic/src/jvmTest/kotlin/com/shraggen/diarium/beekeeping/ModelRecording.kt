@@ -70,8 +70,9 @@ data class ModelRecording(
                 header + ("voiceNotes" to JsonArray(
                     runs.map { run ->
                         buildJsonObject {
-                            put("name", run.note.name)
-                            put("transcript", run.note.transcript)
+                            val fromSpeech = run.transcript != run.note.transcript
+                            put("name", if (fromSpeech) "${run.note.name} [Whisper transcript]" else run.note.name)
+                            put("transcript", run.transcript)
                             put("rawModelOutput", run.rawOutput)
                             put("outcome", run.proposal.outcome.toRecordingJson())
                         }
