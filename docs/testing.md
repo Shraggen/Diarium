@@ -98,42 +98,6 @@ Mutation testing is report-only: no mutation-score threshold fails the build.
 A surviving mutant points at behavior that no test pins down; prefer adding a
 property or a named regression example over asserting implementation details.
 
-## Model evaluation
-
-The golden corpus also scores real GGUF command models on a laptop through the
-production `LlamatikStructuredJsonGenerator` and journal harness. Models are
-never committed; the run is opt-in and report-only:
-
-```bash
-./gradlew :app:sharedLogic:modelEval -Pdiarium.llmModel=~/models/qwen2.5-0.5b-instruct-q4_0.gguf
-```
-
-Optional properties:
-
-- `-Pdiarium.promptMode=prompt_guided|native_grammar` (default
-  `prompt_guided`; see ADR 0003 before using native grammar).
-- `-Pdiarium.sampling=greedy|production`. `greedy` (`topK = 1`, four threads)
-  is the default and gives the same output on every run, so use it to compare
-  models and harness changes. `production` uses Llamatik's built-in defaults,
-  which the app runs with; it has a random seed, so combine it with repeats.
-- `-Pdiarium.evalRepeats=<n>` runs the corpus `n` times and reports the
-  spread of journal accuracy.
-
-Each run writes `app/sharedLogic/build/reports/model-eval/<timestamp>.md` and
-`.json` with the model file name and SHA-256, the prompt mode and sampling
-parameters, and for each voice note the reference transcript, raw model
-output, parsed call, journal outcome, verdict, and latency. Totals cover
-journal accuracy, false accepts, valid JSON, exact calls, per-field accuracy,
-correct rejections, and latency p50/p95. A false accept, where confirmation is
-offered for an inspection the beekeeper did not state, is the safety-critical
-measure.
-
-Per-note results never fail the task; only a missing or unloadable model does.
-`modelEval` is separate from `jvmTest` and `allTests`. The Llamatik JVM
-library needs a CPU with AVX2, FMA, and F16C, and Llamatik is pinned at 1.10.1
-because 2.1.0 crashes on the Linux JVM. Run `modelEval` locally before
-accepting a Llamatik upgrade.
-
 ## CI gates
 
 The main CI workflow first classifies changed paths. For affected code:
