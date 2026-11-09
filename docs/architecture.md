@@ -356,6 +356,7 @@ not disappear inside a large architecture page:
 4. [ADR 0004: Separate speech, VAD, and command-model lifecycles](decisions/0004-separate-native-model-lifecycles.md)
 5. [ADR 0005: Keep persistence offline-first and defer collaboration](decisions/0005-offline-first-sync-later.md)
 6. [ADR 0006: Use deterministic planning for bounded inspection fields](decisions/0006-deterministic-inspection-planning.md)
+7. [ADR 0007: Share one Llamatik command-model adapter across platforms](decisions/0007-shared-llamatik-adapter.md)
 
 New decisions should use the same Context / Decision / Consequences format and
 supersede old ADRs instead of rewriting their history.
