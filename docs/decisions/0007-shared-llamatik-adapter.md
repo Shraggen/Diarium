@@ -22,7 +22,9 @@ phone runs, so a measured result describes the production harness.
 
 Keep one `LlamatikStructuredJsonGenerator` in `app/sharedLogic/src/commonMain`,
 using the former Android logic unchanged, and depend on Llamatik from
-`commonMain`. Delete the per-platform copies. Add a platform-specific adapter
+`commonMain`. Delete the per-platform copies. The Whisper adapter,
+`LlamatikSpeechTranscriber`, follows the same rule and also lives in
+`commonMain`, over Llamatik's common `WhisperBridge`. Add a platform-specific adapter
 again only when a platform needs a call that Llamatik does not expose in common
 code.
 
