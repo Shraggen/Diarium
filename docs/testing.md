@@ -44,6 +44,14 @@ The testing vocabulary is intentionally split by purpose:
 - kernel invariant tests enforce microkernel safety properties such as
   planning being side-effect free, blank input not invoking a planner, unknown
   tools not executing, and duplicate tool names being rejected.
+- `GoldenCorpus` is the golden corpus of voice notes. Each note has a
+  reference transcript, the inspection a beekeeper expects (recorded with
+  given fields, or abstention), and a scripted command-model output with the
+  journal outcome it must reach: recordable, blocked with per-field checks, or
+  malformed. `GoldenCorpusSpecTest` replays the scripted outputs through the
+  real harness without a model, and checks that the production deterministic
+  planner meets every note's ground truth. Model evaluation scores real models
+  against the same notes.
 - reusable planner and mutating-tool conformance helpers define contracts that
   future implementations can run without copying every assertion.
 - Kotest property checks generate hundreds of identifier, language, casing,
@@ -69,7 +77,7 @@ contract. This avoids turning every possible transcript into a hand-written
 acceptance scenario.
 
 If a property check fails, preserve the reported seed while debugging and add
-the smallest meaningful counterexample to the fixed evaluation corpus when it
+the smallest meaningful counterexample to the golden corpus when it
 represents a real domain rule. Randomly generated cases do not replace the
 owned multilingual corpus or physical microphone acceptance.
 
@@ -89,6 +97,69 @@ Reports are written to `<module>/build/reports/pitest/index.html`. The
 Mutation testing is report-only: no mutation-score threshold fails the build.
 A surviving mutant points at behavior that no test pins down; prefer adding a
 property or a named regression example over asserting implementation details.
+
+## Model evaluation
+
+The golden corpus also scores real GGUF command models on a laptop through the
+production `LlamatikStructuredJsonGenerator` and journal harness. Models are
+never committed; the run is opt-in and report-only:
+
+```bash
+./gradlew :app:sharedLogic:modelEval -Pdiarium.llmModel=~/models/qwen2.5-0.5b-instruct-q4_0.gguf
+```
+
+Optional properties:
+
+- `-Pdiarium.promptMode=prompt_guided|native_grammar` (default
+  `prompt_guided`; see ADR 0003 before using native grammar).
+- `-Pdiarium.sampling=greedy|production`. `greedy` (`topK = 1`, four threads)
+  is the default and gives the same output on every run, so use it to compare
+  models and harness changes. `production` uses Llamatik's built-in defaults,
+  which the app runs with; it has a random seed, so combine it with repeats.
+- `-Pdiarium.evalRepeats=<n>` runs the corpus `n` times and reports the
+  spread of journal accuracy.
+
+Each run writes `app/sharedLogic/build/reports/model-eval/<timestamp>.md` and
+`.json` with the model file name and SHA-256, the prompt mode and sampling
+parameters, and for each voice note the reference transcript, raw model
+output, parsed call, journal outcome, verdict, and latency. Totals cover
+journal accuracy, false accepts, valid JSON, exact calls, per-field accuracy,
+correct rejections, and latency p50/p95. A false accept, where confirmation is
+offered for an inspection the beekeeper did not state, is the safety-critical
+measure.
+
+Add `-Pdiarium.recordOutputs=true` to save the run's raw outputs as a
+recording in `app/sharedLogic/src/jvmTest/resources/model-recordings/`, named
+after the model, prompt mode, and sampling profile. A recording stores each raw
+output with the journal outcome the harness reached. `RecordedModelOutputSpecTest`
+replays every committed recording in `jvmTest`, so a harness change that alters
+what the journal does with real model output fails without any model. Commit a
+recording deliberately; re-recording the same setup replaces it, and its diff
+shows how the harness or model output changed.
+
+### Speech recognition
+
+Add `-Pdiarium.whisperModel=<path to a multilingual ggml .bin>` to measure
+Whisper on the golden audio clips first. The task transcribes every clip found
+in `eval/voice-notes/` (override with `-Pdiarium.audioDir=<dir>`), releases
+Whisper, and then plans from both the reference and the Whisper transcripts.
+The report adds per-clip and corpus word error rate, the real-time factor
+(processing time ÷ audio length), and the planning totals for the notes with
+clips, with reference and Whisper transcripts side by side.
+
+A clip is a consented recording of one golden voice note, spoken in the note's
+`language`: a 16 kHz mono PCM16 WAV named after the note, for example
+`english-valid-command.wav` (`GoldenVoiceNote.audioClipName`). Notes without a
+clip are skipped. Clips are stored in Git LFS (`eval/**/*.wav`). Run
+`git lfs install` once, and check the repository's GitHub LFS quota before
+adding clips. Normal CI checkouts do not fetch them.
+
+Per-note results never fail the task; only a missing or unloadable model, or
+a Whisper model with no clips, does.
+`modelEval` is separate from `jvmTest` and `allTests`. The Llamatik JVM
+library needs a CPU with AVX2, FMA, and F16C, and Llamatik is pinned at 1.10.1
+because 2.1.0 crashes on the Linux JVM. Run `modelEval` locally before
+accepting a Llamatik upgrade.
 
 ## CI gates
 
@@ -123,6 +194,10 @@ The local non-device gate covers static analysis, core and shared tests,
 Android lint, and debug application and test APK assembly. The connected
 Android gate adds Room, Activity, Silero, and optional Whisper coverage on an
 emulator or device.
+
+`sharedLogic` also has a desktop JVM target, so the shared suite runs on a
+laptop with `./gradlew :app:sharedLogic:jvmTest` and needs no model files.
+`allTests` includes it.
 
 The task-oriented commands and change-scope decision table are in
 [How to verify a change](verifying-changes.md).
@@ -168,9 +243,10 @@ on the owned corpus. Abstention is not automatically a defect: for uncertain
 speech it is safer than an invented journal entry. The four 2026-07-14 field
 transcripts are permanent deterministic-planner regressions.
 
-Once consented golden audio exists, measure Whisper independently with word or
-character error rate and then measure end-to-end field accuracy. This separates
-speech-recognition failures from deterministic-planner coverage failures.
+Once consented golden audio exists in `eval/voice-notes/`, `modelEval` with a
+Whisper model measures word error rate and real-time factor independently and
+then end-to-end planning accuracy (see [Model evaluation](#model-evaluation)).
+This separates speech-recognition failures from planner coverage failures.
 
 On a representative physical phone, collect p50 and p95 for transcription,
 planning, and confirmed persistence. Record peak process RSS, Java and native

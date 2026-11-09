@@ -14,6 +14,9 @@ detekt {
 kotlin {
     jvmToolchain(libs.versions.jdk.get().toInt())
 
+    // Desktop JVM target: runs shared tests and laptop model evaluation.
+    jvm()
+
     listOf(
         iosArm64(),
         iosSimulatorArm64()
@@ -48,19 +51,74 @@ kotlin {
         commonMain.dependencies {
             api(projects.core)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.llamatik)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.kotest.property)
         }
+    }
+}
 
-        androidMain.dependencies {
-            implementation(libs.llamatik)
-        }
+// Model evaluation (docs/testing.md): scores the golden corpus against a real
+// GGUF model. Opt-in and report-only; never part of jvmTest or allTests.
+val modelEvalClasses = "*ModelEval"
+val jvmTest = tasks.named<Test>("jvmTest") {
+    filter.excludeTestsMatching(modelEvalClasses)
+}
 
-        iosMain.dependencies {
-            implementation(libs.llamatik)
+tasks.register<Test>("modelEval") {
+    group = "verification"
+    description = "Scores the golden corpus against a GGUF model: -Pdiarium.llmModel=<path.gguf>"
+
+    val repositoryRoot = rootDir
+    fun pathProperty(name: String) = providers.gradleProperty(name).map { path ->
+        val expanded = if (path.startsWith("~/")) System.getProperty("user.home") + path.drop(1) else path
+        repositoryRoot.resolve(expanded).absolutePath
+    }
+    val llmModel = pathProperty("diarium.llmModel")
+    val whisperModel = pathProperty("diarium.whisperModel")
+    // Consented golden voice-note recordings, stored in Git LFS.
+    val audioDir = pathProperty("diarium.audioDir").orElse(repositoryRoot.resolve("eval/voice-notes").absolutePath)
+    val reportDir = layout.buildDirectory.dir("reports/model-eval")
+
+    testClassesDirs = jvmTest.get().testClassesDirs
+    classpath = jvmTest.get().classpath
+    javaLauncher = jvmTest.flatMap { it.javaLauncher }
+    useJUnit()
+    filter.includeTestsMatching(modelEvalClasses)
+    // Llamatik holds one global, non-thread-safe model per process.
+    maxParallelForks = 1
+    maxHeapSize = "2g"
+    testLogging.showStandardStreams = true
+    // Setup failures (missing clips, unloadable model) must show their message.
+    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    outputs.upToDateWhen { false }
+    outputs.dir(reportDir)
+
+    systemProperty("diarium.reportDir", reportDir.get().asFile.absolutePath)
+    listOf("diarium.promptMode", "diarium.sampling", "diarium.evalRepeats").forEach { name ->
+        providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
+    }
+    llmModel.orNull?.let { systemProperty("diarium.llmModel", it) }
+    whisperModel.orNull?.let { systemProperty("diarium.whisperModel", it) }
+    systemProperty("diarium.audioDir", audioDir.get())
+    // -Pdiarium.recordOutputs=true saves raw outputs for RecordedModelOutputSpecTest.
+    if (providers.gradleProperty("diarium.recordOutputs").orNull.toBoolean()) {
+        systemProperty(
+            "diarium.recordingsDir",
+            layout.projectDirectory.dir("src/jvmTest/resources/model-recordings").asFile.absolutePath,
+        )
+    }
+
+    doFirst {
+        val model = llmModel.orNull?.let(::File) ?: throw GradleException(
+            "modelEval needs a command model: ./gradlew :app:sharedLogic:modelEval -Pdiarium.llmModel=<path.gguf>",
+        )
+        if (!model.isFile) throw GradleException("modelEval command model not found: $model")
+        whisperModel.orNull?.let(::File)?.takeUnless { it.isFile }?.let {
+            throw GradleException("modelEval Whisper model not found: $it")
         }
     }
 }

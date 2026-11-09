@@ -1,13 +1,15 @@
 # Current change
 
-Outcome: Contributors build without installing JDK 21, and the test suites are checked by generated properties and by mutation testing.
-Owning bounded context: Build tooling and core tool-contract verification
+Outcome: Voice-to-journal quality is checked by a golden corpus of voice notes: deterministic harness specs on every test run, and opt-in laptop scoring of real GGUF and Whisper models (issue #59).
+Owning bounded context: beekeeping-journal (app/sharedLogic); test-only evaluation code
 Owning team: Shraggen
-Current slice: Gradle-provisioned JDK 21 toolchain; core property tests for schema serialization, schema DSL, model tool-call parsing, tool mapping, and tool arguments; report-only Pitest `mutationTest` tasks for `core` and `sharedLogic`; fix for multi-tool prompt indentation found by the mapper property.
-Acceptance criteria: CI passes `:core:jvmTest`, `:app:sharedLogic:allTests`, and the Android build on the provisioned toolchain; the non-blocking CI mutation step publishes Pitest reports for both modules.
-Files changed: gradle.properties, gradle/libs.versions.toml, build.gradle.kts, core/build.gradle.kts, app/*/build.gradle.kts, core and sharedLogic lockfiles, core property tests, LlamatikToolMapper.kt, .github/workflows/ci.yml, docs/getting-started.md, docs/testing.md
-Open risks: Tests were verified only in CI, not locally. Pitest mutates Kotlin bytecode without a Kotlin-aware plugin, so some survivors are compiler-generated noise. The `sharedLogic` mutation run depends on an AGP-internal runtime-classes jar path. `gradlew` still needs some Java 17+ to launch, and the Android SDK root and license acceptance are not automated.
+Current slice: All issue #59 slices on branch feat/59-golden-corpus-model-evals: one common Llamatik command-model adapter (ADR 0007); sharedLogic JVM target; GoldenCorpus + GoldenCorpusSpecTest; :app:sharedLogic:modelEval report; recorded model outputs replayed by RecordedModelOutputSpecTest; common Whisper transcriber and speech scoring.
+Acceptance criteria: AC1-AC6 of issue #59. jvmTest/allTests need no model; modelEval fails fast without -Pdiarium.llmModel and writes build/reports/model-eval/<timestamp>.{md,json}; a deliberate parser regression fails the replay specs without a model.
+Files changed: app/sharedLogic (build.gradle.kts, gradle.lockfile, commonMain Llamatik adapters, commonTest corpus, jvmTest eval and recordings), .gitattributes, .agents/config.env, docs (ADR 0007, testing, module reference, indexes), mkdocs.yml
+Open risks: No consented audio clips exist yet, so Whisper scoring was verified only with synthetic local clips. CI ios-build (Xcode) not run locally; iOS klibs compile on Linux. Model eval measured on one 4-CPU laptop only. The sharedLogic mutation run still uses the Android host-test jar path.
 Required checks: See `.agents/config.env`
-Rollout strategy: Mutation testing is report-only (`continue-on-error`, no threshold). Promoting a mutation-score threshold to a blocking gate requires explicit approval.
-Rollback strategy: Revert the commits; lockfile additions are confined to test and `pitest` configurations.
-Last updated: 2026-10-17
+Rollout strategy: Test-only and opt-in; modelEval is never part of jvmTest/allTests; quality thresholds stay report-only. Promoting any threshold to a blocking gate requires explicit approval.
+Rollback strategy: Revert the slice commits individually; 1b (JVM target) reverts without 1a (shared adapter).
+Delivery status: PR #65 (feat/59-golden-corpus-model-evals -> main) is open and awaiting CI and review. Merging needs explicit approval. It is titled `test(eval):` so Release Please does not cut a feature release; rename it to `feat:` if a release is wanted.
+Next steps: (1) Watch PR #65 CI. The macOS ios-build runs only after merging to main. (2) Record consented clips for the golden voice notes into eval/voice-notes/<GoldenVoiceNote.audioClipName> (16 kHz mono PCM16), after checking the LFS quota. (3) Use modelEval to compare greedy and production sampling for the production-sampling ADR. (4) Optional: an eval-only Koog-backed ToolCallPlanner scored with modelEval. (5) Optional: switch sharedLogic mutation testing to jvmTest.
+Last updated: 2026-11-09
