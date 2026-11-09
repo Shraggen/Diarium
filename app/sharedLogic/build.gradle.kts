@@ -96,6 +96,13 @@ tasks.register<Test>("modelEval") {
         providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
     }
     llmModel.orNull?.let { systemProperty("diarium.llmModel", it) }
+    // -Pdiarium.recordOutputs=true saves raw outputs for RecordedModelOutputSpecTest.
+    if (providers.gradleProperty("diarium.recordOutputs").orNull.toBoolean()) {
+        systemProperty(
+            "diarium.recordingsDir",
+            layout.projectDirectory.dir("src/jvmTest/resources/model-recordings").asFile.absolutePath,
+        )
+    }
 
     doFirst {
         val model = llmModel.orNull?.let(::File) ?: throw GradleException(
