@@ -108,6 +108,5 @@ from a fresh checkout to a successful Android build.
 - [Plan, confirm, execute](decisions/0002-plan-confirm-execute.md) explains why
   planning cannot save data.
 - [Deterministic inspection planning](decisions/0006-deterministic-inspection-planning.md)
-- [Shared Llamatik adapter](decisions/0007-shared-llamatik-adapter.md)
   explains why bounded facts no longer use generated JSON.
 - [Project journal](journal.md) records how the project evolved.

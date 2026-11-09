@@ -48,12 +48,19 @@ kotlin {
         commonMain.dependencies {
             api(projects.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.llamatik)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.kotest.property)
+        }
+
+        androidMain.dependencies {
+            implementation(libs.llamatik)
+        }
+
+        iosMain.dependencies {
+            implementation(libs.llamatik)
         }
     }
 }
