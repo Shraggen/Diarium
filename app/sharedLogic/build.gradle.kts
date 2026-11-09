@@ -73,10 +73,14 @@ tasks.register<Test>("modelEval") {
     description = "Scores the golden corpus against a GGUF model: -Pdiarium.llmModel=<path.gguf>"
 
     val repositoryRoot = rootDir
-    val llmModel = providers.gradleProperty("diarium.llmModel").map { path ->
+    fun pathProperty(name: String) = providers.gradleProperty(name).map { path ->
         val expanded = if (path.startsWith("~/")) System.getProperty("user.home") + path.drop(1) else path
         repositoryRoot.resolve(expanded).absolutePath
     }
+    val llmModel = pathProperty("diarium.llmModel")
+    val whisperModel = pathProperty("diarium.whisperModel")
+    // Consented golden voice-note recordings, stored in Git LFS.
+    val audioDir = pathProperty("diarium.audioDir").orElse(repositoryRoot.resolve("eval/voice-notes").absolutePath)
     val reportDir = layout.buildDirectory.dir("reports/model-eval")
 
     testClassesDirs = jvmTest.get().testClassesDirs
@@ -88,6 +92,8 @@ tasks.register<Test>("modelEval") {
     maxParallelForks = 1
     maxHeapSize = "2g"
     testLogging.showStandardStreams = true
+    // Setup failures (missing clips, unloadable model) must show their message.
+    testLogging.exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
     outputs.upToDateWhen { false }
     outputs.dir(reportDir)
 
@@ -96,6 +102,8 @@ tasks.register<Test>("modelEval") {
         providers.gradleProperty(name).orNull?.let { systemProperty(name, it) }
     }
     llmModel.orNull?.let { systemProperty("diarium.llmModel", it) }
+    whisperModel.orNull?.let { systemProperty("diarium.whisperModel", it) }
+    systemProperty("diarium.audioDir", audioDir.get())
     // -Pdiarium.recordOutputs=true saves raw outputs for RecordedModelOutputSpecTest.
     if (providers.gradleProperty("diarium.recordOutputs").orNull.toBoolean()) {
         systemProperty(
@@ -109,5 +117,8 @@ tasks.register<Test>("modelEval") {
             "modelEval needs a command model: ./gradlew :app:sharedLogic:modelEval -Pdiarium.llmModel=<path.gguf>",
         )
         if (!model.isFile) throw GradleException("modelEval command model not found: $model")
+        whisperModel.orNull?.let(::File)?.takeUnless { it.isFile }?.let {
+            throw GradleException("modelEval Whisper model not found: $it")
+        }
     }
 }

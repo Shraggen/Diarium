@@ -137,7 +137,25 @@ what the journal does with real model output fails without any model. Commit a
 recording deliberately; re-recording the same setup replaces it, and its diff
 shows how the harness or model output changed.
 
-Per-note results never fail the task; only a missing or unloadable model does.
+### Speech recognition
+
+Add `-Pdiarium.whisperModel=<path to a multilingual ggml .bin>` to measure
+Whisper on the golden audio clips first. The task transcribes every clip found
+in `eval/voice-notes/` (override with `-Pdiarium.audioDir=<dir>`), releases
+Whisper, and then plans from both the reference and the Whisper transcripts.
+The report adds per-clip and corpus word error rate, the real-time factor
+(processing time ÷ audio length), and the planning totals for the notes with
+clips, with reference and Whisper transcripts side by side.
+
+A clip is a consented recording of one golden voice note, spoken in the note's
+`language`: a 16 kHz mono PCM16 WAV named after the note, for example
+`english-valid-command.wav` (`GoldenVoiceNote.audioClipName`). Notes without a
+clip are skipped. Clips are stored in Git LFS (`eval/**/*.wav`). Run
+`git lfs install` once, and check the repository's GitHub LFS quota before
+adding clips. Normal CI checkouts do not fetch them.
+
+Per-note results never fail the task; only a missing or unloadable model, or
+a Whisper model with no clips, does.
 `modelEval` is separate from `jvmTest` and `allTests`. The Llamatik JVM
 library needs a CPU with AVX2, FMA, and F16C, and Llamatik is pinned at 1.10.1
 because 2.1.0 crashes on the Linux JVM. Run `modelEval` locally before
@@ -225,9 +243,10 @@ on the owned corpus. Abstention is not automatically a defect: for uncertain
 speech it is safer than an invented journal entry. The four 2026-07-14 field
 transcripts are permanent deterministic-planner regressions.
 
-Once consented golden audio exists, measure Whisper independently with word or
-character error rate and then measure end-to-end field accuracy. This separates
-speech-recognition failures from deterministic-planner coverage failures.
+Once consented golden audio exists in `eval/voice-notes/`, `modelEval` with a
+Whisper model measures word error rate and real-time factor independently and
+then end-to-end planning accuracy (see [Model evaluation](#model-evaluation)).
+This separates speech-recognition failures from planner coverage failures.
 
 On a representative physical phone, collect p50 and p95 for transcription,
 planning, and confirmed persistence. Record peak process RSS, Java and native

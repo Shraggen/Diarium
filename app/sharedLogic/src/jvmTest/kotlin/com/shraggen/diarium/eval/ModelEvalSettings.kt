@@ -60,6 +60,9 @@ data class ModelEvalSettings(
     val reportDir: File,
     /** Where to save raw outputs as harness recordings; null when not recording. */
     val recordingsDir: File?,
+    /** Whisper model for speech evaluation of the corpus audio clips; null to skip it. */
+    val whisperModel: File?,
+    val audioDir: File,
 ) {
     companion object {
         fun fromSystemProperties(): ModelEvalSettings {
@@ -76,6 +79,9 @@ data class ModelEvalSettings(
                 repeats = System.getProperty("diarium.evalRepeats")?.toIntOrNull()?.coerceAtLeast(1) ?: 1,
                 reportDir = File(System.getProperty("diarium.reportDir") ?: "build/reports/model-eval"),
                 recordingsDir = System.getProperty("diarium.recordingsDir")?.takeIf { it.isNotBlank() }?.let(::File),
+                whisperModel = System.getProperty("diarium.whisperModel")?.takeIf { it.isNotBlank() }?.let(::File)
+                    ?.also { require(it.isFile) { "Whisper model not found: ${it.absolutePath}" } },
+                audioDir = File(System.getProperty("diarium.audioDir") ?: "eval/voice-notes"),
             )
         }
 
