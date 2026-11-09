@@ -10,6 +10,4 @@ Open risks: No consented audio clips exist yet, so Whisper scoring was verified 
 Required checks: See `.agents/config.env`
 Rollout strategy: Test-only and opt-in; modelEval is never part of jvmTest/allTests; quality thresholds stay report-only. Promoting any threshold to a blocking gate requires explicit approval.
 Rollback strategy: Revert the slice commits individually; 1b (JVM target) reverts without 1a (shared adapter).
-Delivery status: PR #65 (feat/59-golden-corpus-model-evals -> main) is open and awaiting CI and review. Merging needs explicit approval. It is titled `test(eval):` so Release Please does not cut a feature release; rename it to `feat:` if a release is wanted.
-Next steps: (1) Watch PR #65 CI. The macOS ios-build runs only after merging to main. (2) Record consented clips for the golden voice notes into eval/voice-notes/<GoldenVoiceNote.audioClipName> (16 kHz mono PCM16), after checking the LFS quota. (3) Use modelEval to compare greedy and production sampling for the production-sampling ADR. (4) Optional: an eval-only Koog-backed ToolCallPlanner scored with modelEval. (5) Optional: switch sharedLogic mutation testing to jvmTest.
 Last updated: 2026-11-09
