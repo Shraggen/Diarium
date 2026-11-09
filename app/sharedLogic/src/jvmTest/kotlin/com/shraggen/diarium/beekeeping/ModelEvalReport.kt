@@ -33,24 +33,6 @@ class ModelEvalReport(
         return listOf(markdown, json)
     }
 
-    /** Saves the raw outputs as a harness recording replayed by [RecordedModelOutputSpecTest]. */
-    fun writeRecordingTo(directory: File): File = ModelRecording.write(
-        directory = directory,
-        fileStem = listOf(
-            settings.llmModel.nameWithoutExtension,
-            settings.promptMode.name.lowercase(),
-            settings.sampling.name.lowercase(),
-        ).joinToString("."),
-        header = buildJsonObject {
-            put("recordedAt", createdAt.toString())
-            put("model", settings.llmModel.name)
-            put("sha256", modelSha256)
-            put("promptMode", settings.promptMode.name)
-            put("sampling", settings.sampling.describe())
-        },
-        runs = runs,
-    )
-
     fun summary(): String =
         "${settings.llmModel.name}: journal accuracy ${score.journalAccuracy}, " +
             "false accepts ${score.falseAccepts}, exact calls ${score.exactCall}, " +

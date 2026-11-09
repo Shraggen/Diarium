@@ -58,8 +58,6 @@ data class ModelEvalSettings(
     val sampling: SamplingProfile,
     val repeats: Int,
     val reportDir: File,
-    /** Where to save raw outputs as harness recordings; null when not recording. */
-    val recordingsDir: File?,
 ) {
     companion object {
         fun fromSystemProperties(): ModelEvalSettings {
@@ -75,7 +73,6 @@ data class ModelEvalSettings(
                 sampling = enumProperty("diarium.sampling", SamplingProfile.GREEDY),
                 repeats = System.getProperty("diarium.evalRepeats")?.toIntOrNull()?.coerceAtLeast(1) ?: 1,
                 reportDir = File(System.getProperty("diarium.reportDir") ?: "build/reports/model-eval"),
-                recordingsDir = System.getProperty("diarium.recordingsDir")?.takeIf { it.isNotBlank() }?.let(::File),
             )
         }
 

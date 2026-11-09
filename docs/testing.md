@@ -128,15 +128,6 @@ correct rejections, and latency p50/p95. A false accept, where confirmation is
 offered for an inspection the beekeeper did not state, is the safety-critical
 measure.
 
-Add `-Pdiarium.recordOutputs=true` to save the run's raw outputs as a
-recording in `app/sharedLogic/src/jvmTest/resources/model-recordings/`, named
-after the model, prompt mode, and sampling profile. A recording stores each raw
-output with the journal outcome the harness reached. `RecordedModelOutputSpecTest`
-replays every committed recording in `jvmTest`, so a harness change that alters
-what the journal does with real model output fails without any model. Commit a
-recording deliberately; re-recording the same setup replaces it, and its diff
-shows how the harness or model output changed.
-
 Per-note results never fail the task; only a missing or unloadable model does.
 `modelEval` is separate from `jvmTest` and `allTests`. The Llamatik JVM
 library needs a CPU with AVX2, FMA, and F16C, and Llamatik is pinned at 1.10.1
