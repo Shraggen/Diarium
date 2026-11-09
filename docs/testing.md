@@ -44,14 +44,6 @@ The testing vocabulary is intentionally split by purpose:
 - kernel invariant tests enforce microkernel safety properties such as
   planning being side-effect free, blank input not invoking a planner, unknown
   tools not executing, and duplicate tool names being rejected.
-- `GoldenCorpus` is the golden corpus of voice notes. Each note has a
-  reference transcript, the inspection a beekeeper expects (recorded with
-  given fields, or abstention), and a scripted command-model output with the
-  journal outcome it must reach: recordable, blocked with per-field checks, or
-  malformed. `GoldenCorpusSpecTest` replays the scripted outputs through the
-  real harness without a model, and checks that the production deterministic
-  planner meets every note's ground truth. Model evaluation scores real models
-  against the same notes.
 - reusable planner and mutating-tool conformance helpers define contracts that
   future implementations can run without copying every assertion.
 - Kotest property checks generate hundreds of identifier, language, casing,
@@ -77,7 +69,7 @@ contract. This avoids turning every possible transcript into a hand-written
 acceptance scenario.
 
 If a property check fails, preserve the reported seed while debugging and add
-the smallest meaningful counterexample to the golden corpus when it
+the smallest meaningful counterexample to the fixed evaluation corpus when it
 represents a real domain rule. Randomly generated cases do not replace the
 owned multilingual corpus or physical microphone acceptance.
 
