@@ -1,7 +1,5 @@
 package com.shraggen.diarium.beekeeping
 
-import com.shraggen.diarium.eval.WordErrors
-import com.shraggen.diarium.speech.SpeechLanguage
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -68,22 +66,8 @@ class GoldenCorpusScoreTest {
         assertEquals(listOf(Ratio(1, 1), Ratio(0, 1)), score.journalAccuracyPerRepeat)
     }
 
-    @Test
-    fun speechScoreTotalsWordErrorsAndRealTimeFactorOverAllClips() {
-        val score = SpeechScore.of(
-            listOf(
-                SpeechRun(hiveFourQueenSeen, "I inspected hive four and saw the queen.", 1_000, 2_000),
-                SpeechRun(missingHive, "I inspected the hive and saw the queen.", 2_000, 2_000),
-            ),
-        )
-
-        assertEquals(WordErrors(1, 16), score.wordErrors)
-        assertEquals(0.75, score.realTimeFactor)
-    }
-
     private fun note(transcript: String, expected: ExpectedInspection) = GoldenVoiceNote(
         name = transcript,
-        language = SpeechLanguage.ENGLISH,
         transcript = transcript,
         expectedInspection = expected,
         scriptedModelOutput = "",

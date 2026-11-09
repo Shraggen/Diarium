@@ -53,12 +53,6 @@ class GoldenCorpusSpecTest {
     }
 
     @Test
-    fun everyVoiceNoteHasItsOwnAudioClipName() {
-        val names = goldenCorpus.map { it.audioClipName }
-        assertEquals(names.distinct(), names)
-    }
-
-    @Test
     fun productionPlannerMatchesTheGroundTruthOfEveryVoiceNote() = runTest {
         val failures = goldenCorpus.mapNotNull { note ->
             val outcome = VoiceNoteJournal.withPlanner(RecordInspectionPlanner())

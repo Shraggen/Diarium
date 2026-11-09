@@ -1,6 +1,5 @@
 package com.shraggen.diarium.beekeeping
 
-import com.shraggen.diarium.eval.WordErrors
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -9,17 +8,13 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import kotlin.math.ceil
 
-/**
- * One golden voice note planned once by a command model, from [transcript]:
- * the reference transcript, or a speech-recognition transcript of its clip.
- */
+/** One golden voice note planned once by a command model. */
 data class VoiceNoteRun(
     val note: GoldenVoiceNote,
     val repeat: Int,
     val rawOutput: String,
     val proposal: JournalProposal,
     val latencyMillis: Long,
-    val transcript: String = note.transcript,
 ) {
     val verdict: Verdict
         get() {
@@ -99,34 +94,6 @@ data class CorpusScore(
                 latencyP95Millis = latencies.nearestRank(P95),
             )
         }
-    }
-}
-
-/** Speech recognition of one golden voice note's audio clip. */
-data class SpeechRun(
-    val note: GoldenVoiceNote,
-    val transcript: String,
-    val processingMillis: Long,
-    val audioMillis: Long,
-) {
-    val wordErrors: WordErrors
-        get() = WordErrors.between(note.transcript, transcript)
-
-    val realTimeFactor: Double
-        get() = processingMillis.toDouble() / audioMillis.coerceAtLeast(1)
-}
-
-/** Corpus word error rate, and real-time factor as total processing time over total audio length. */
-data class SpeechScore(
-    val wordErrors: WordErrors,
-    val realTimeFactor: Double,
-) {
-    companion object {
-        fun of(runs: List<SpeechRun>): SpeechScore = SpeechScore(
-            wordErrors = runs.map { it.wordErrors }.fold(WordErrors.NONE, WordErrors::plus),
-            realTimeFactor = runs.sumOf { it.processingMillis }.toDouble() /
-                runs.sumOf { it.audioMillis }.coerceAtLeast(1),
-        )
     }
 }
 
