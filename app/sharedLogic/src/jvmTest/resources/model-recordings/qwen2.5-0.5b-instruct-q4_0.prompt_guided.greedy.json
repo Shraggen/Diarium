@@ -1,0 +1,159 @@
+{
+    "recordedAt": "2026-11-09T00:44:12.739401043Z",
+    "model": "qwen2.5-0.5b-instruct-q4_0.gguf",
+    "sha256": "7671c0c304e6ce5a7fc577bcb12aba01e2c155cc2efd29b2213c95b18edaf6ed",
+    "promptMode": "PROMPT_GUIDED",
+    "sampling": "greedy (temperature=0.55, topK=1, topP=0.8, repeatPenalty=1.1, maxTokens=640, contextLength=4096, numThreads=4, batchSize=512, gpuLayers=0)",
+    "voiceNotes": [
+        {
+            "name": "English valid command",
+            "transcript": "I inspected hive 4 and saw the queen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": true}}",
+            "outcome": {
+                "kind": "recordable",
+                "hiveId": "4",
+                "queenSeen": true
+            }
+        },
+        {
+            "name": "German number word with queen not seen",
+            "transcript": "Bienenstock Nummer vier wurde kontrolliert und die Königin nicht gesehen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"Bienenstock 4\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Noisy Serbian Latin command",
+            "transcript": "Hm... košnica, pet; matica je viđena.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"košnica četiri\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "MISMATCH"
+            }
+        },
+        {
+            "name": "Serbian Cyrillic compound number words",
+            "transcript": "Прегледао сам кошницу четрдесет две и матица није виђена.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"четрдесет две\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Serbian Latin release acceptance phrase",
+            "transcript": "Pregledao sam košnicu 4 i video maticu.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "VERIFIED",
+                "queen": "MISMATCH"
+            }
+        },
+        {
+            "name": "Serbian Cyrillic release acceptance phrase",
+            "transcript": "Прегледао сам кошницу 4 и видео матицу.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "VERIFIED",
+                "queen": "MISMATCH"
+            }
+        },
+        {
+            "name": "Missing transcript identifier blocks an invented hive",
+            "transcript": "I inspected the hive and saw the queen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": true}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "CANNOT_VERIFY",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Serbian transcript and proposal contradiction is blocked",
+            "transcript": "Pregledao sam košnicu, pet, i video maticu.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"peta\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "MISMATCH"
+            }
+        },
+        {
+            "name": "Multiple explicit identifiers cannot be guessed",
+            "transcript": "I inspected hive 4, correction, hive 5, and saw the queen.",
+            "rawModelOutput": "{\"tool\":\"record_inspection\",\"arguments\":{\"hive_id\":[\"4\", \"5\"], \"queen_seen\":true}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "CANNOT_VERIFY",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Malformed model JSON cannot produce a proposal",
+            "transcript": "I inspected hive 4.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "VERIFIED",
+                "queen": "CANNOT_VERIFY"
+            }
+        },
+        {
+            "name": "Physical English run rejects field label inside identifier",
+            "transcript": "I inspected Hive 4 and saw the queen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": true}}",
+            "outcome": {
+                "kind": "recordable",
+                "hiveId": "4",
+                "queenSeen": true
+            }
+        },
+        {
+            "name": "Physical Serbian four run rejects hallucinated fields",
+            "transcript": "Прегледово, sam košnicu, četri, i video, maticu.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"4\", \"queen_seen\": false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "VERIFIED",
+                "queen": "MISMATCH"
+            }
+        },
+        {
+            "name": "Physical German run rejects translated field label",
+            "transcript": "Ich habe Bienenstock 4 kontrolliert und die Königin gesehen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"Bienenstock 4\", \"queen_seen\": true}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Physical German five run rejects omitted model identifier",
+            "transcript": "Ich habe Bienenstock 5 kontrolliert und die Königin gesehen.",
+            "rawModelOutput": "{\"tool\": \"record_inspection\", \"arguments\": {\"hive_id\": \"Bienenstock 5\", \"queen_seen\": true}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "VERIFIED"
+            }
+        },
+        {
+            "name": "Physical Serbian five run rejects inflected identifier",
+            "transcript": "Прегледово, sam košnicu, пет и видео, sam, maticu.",
+            "rawModelOutput": "{\"tool\":\"record_inspection\",\"arguments\":{\"hive_id\":\"peta\",\"queen_seen\":false}}",
+            "outcome": {
+                "kind": "blocked",
+                "hive": "MISMATCH",
+                "queen": "MISMATCH"
+            }
+        }
+    ]
+}
