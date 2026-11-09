@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.3.0](https://github.com/Shraggen/Diarium/compare/v0.2.13...v0.3.0) (2026-11-09)
+
+
+### Features
+
+* **eval:** golden-corpus specs and laptop model evals ([4d3f7e0](https://github.com/Shraggen/Diarium/commit/4d3f7e05696cb31487c986c7e244592e7fa7b27e))
+* **eval:** golden-corpus specs and laptop model evals ([6e2a72b](https://github.com/Shraggen/Diarium/commit/6e2a72b2185f3d8bbc21324d38734b926464e07a))
+* **eval:** golden-corpus specs and laptop model evals ([3a68833](https://github.com/Shraggen/Diarium/commit/3a6883370a827374d2f0115cf2767b75904f6ff8))
+* **eval:** golden-corpus specs and laptop model evals ([593135a](https://github.com/Shraggen/Diarium/commit/593135a7a60fb808e5a09a3dcd8e279c95ae5d38))
+* **eval:** golden-corpus specs and laptop model evals ([6af8042](https://github.com/Shraggen/Diarium/commit/6af8042aa38394c959876f771cce9ae2d67184e8))
+* **eval:** golden-corpus specs and laptop model evals ([0d65771](https://github.com/Shraggen/Diarium/commit/0d65771d649ca3255cb8d0bb981e749c419f2462))
+* **eval:** golden-corpus specs and laptop model evals ([6aefedf](https://github.com/Shraggen/Diarium/commit/6aefedfc3b96ba93ff84a6a1c9fd27be5bf6e47b))
+* **eval:** golden-corpus specs and laptop model evals ([1fd7d40](https://github.com/Shraggen/Diarium/commit/1fd7d40d0cfcd18685b902db005c15ff79ab2abc))
+* **eval:** golden-corpus specs and laptop model evals ([14a0cfc](https://github.com/Shraggen/Diarium/commit/14a0cfcb4c484625bff549eecaad436c3c5c512c))
+
 ## [0.2.13](https://github.com/Shraggen/Diarium/compare/v0.2.12...v0.2.13) (2026-11-09)
 
 
