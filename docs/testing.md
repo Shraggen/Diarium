@@ -124,10 +124,6 @@ Android lint, and debug application and test APK assembly. The connected
 Android gate adds Room, Activity, Silero, and optional Whisper coverage on an
 emulator or device.
 
-`sharedLogic` also has a desktop JVM target, so the shared suite runs on a
-laptop with `./gradlew :app:sharedLogic:jvmTest` and needs no model files.
-`allTests` includes it.
-
 The task-oriented commands and change-scope decision table are in
 [How to verify a change](verifying-changes.md).
 

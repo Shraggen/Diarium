@@ -14,9 +14,6 @@ detekt {
 kotlin {
     jvmToolchain(libs.versions.jdk.get().toInt())
 
-    // Desktop JVM target: runs shared tests and laptop model evaluation.
-    jvm()
-
     listOf(
         iosArm64(),
         iosSimulatorArm64()
