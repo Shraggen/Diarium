@@ -20,7 +20,8 @@ class GoldenCorpusModelEval {
         val settings = ModelEvalSettings.fromSystemProperties()
         val runs = runBlocking { evaluate(settings) }
         val report = ModelEvalReport(settings, runs)
-        val written = report.writeTo(settings.reportDir)
+        val written = report.writeTo(settings.reportDir) +
+            listOfNotNull(settings.recordingsDir?.let(report::writeRecordingTo))
         println(report.summary())
         written.forEach { println("Model eval report: ${it.absolutePath}") }
     }
