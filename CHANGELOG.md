@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.13](https://github.com/Shraggen/Diarium/compare/v0.2.12...v0.2.13) (2026-11-09)
+
+
+### Bug Fixes
+
+* **deps:** bump agp from 9.5.0 to 9.5.1 ([#60](https://github.com/Shraggen/Diarium/issues/60)) ([067be68](https://github.com/Shraggen/Diarium/commit/067be686ac8ca5c1a44267e4567cd862c46ab663))
+* **deps:** bump com.google.devtools.ksp from 2.3.12 to 2.3.13 ([#63](https://github.com/Shraggen/Diarium/issues/63)) ([011c810](https://github.com/Shraggen/Diarium/commit/011c81065ec7082cbe2d173013480af8ee1a09c5))
+* **deps:** bump io.ktor.plugin from 3.6.0 to 3.6.1 ([#62](https://github.com/Shraggen/Diarium/issues/62)) ([620376b](https://github.com/Shraggen/Diarium/commit/620376b0ba2da651f3e6122d1019e1bbd89b2ab9))
+* **deps:** bump org.jetbrains.compose.material3:material3 from 1.13.0-beta01 to 1.13.0-beta02 ([#61](https://github.com/Shraggen/Diarium/issues/61)) ([189a6cf](https://github.com/Shraggen/Diarium/commit/189a6cfa1a7bd9bf938e832c9544533779793fd2))
+* **deps:** bump org.pitest:pitest-command-line from 1.30.1 to 1.30.2 ([#64](https://github.com/Shraggen/Diarium/issues/64)) ([8170005](https://github.com/Shraggen/Diarium/commit/81700056e51223c9b8de631d85e67e0f6dd0b38e))
+
 ## [0.2.12](https://github.com/Shraggen/Diarium/compare/v0.2.11...v0.2.12) (2026-11-02)
 
 
