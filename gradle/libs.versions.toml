@@ -28,7 +28,7 @@ junit4 = "4.13.2"
 kotest = "6.2.7"
 pitest = "1.30.2"
 cyclonedx = "3.6.0"
-detekt-compose = "2.1.2"
+detekt-compose = "2.2.0"
 
 [libraries]
 konsist = { module = "com.lemonappdev:konsist", version.ref = "konsist" }
